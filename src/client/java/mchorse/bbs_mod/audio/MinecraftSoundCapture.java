@@ -144,11 +144,11 @@ public class MinecraftSoundCapture implements SoundInstanceListener
             it.remove();
         }
 
-        /* 1.20.1 has no SoundManager#getListenerTransform - vanilla feeds the camera
-         * straight to the sound listener (SoundSystem#updateListenerPosition), so sampling
-         * the camera here gives the exact same transform the OpenAL listener is using.
-         * The listener's right axis is at x up (what OpenAL derives from the orientation),
-         * i.e. forward x up = getHorizontalPlane() x getVerticalPlane(). */
+        /* Sampling the camera here gives the exact transform the OpenAL listener
+         * is using - vanilla feeds the camera straight to the sound listener
+         * (SoundSystem#updateListenerPosition). The listener's right axis is at
+         * x up (what OpenAL derives from the orientation), i.e. forward x up =
+         * getHorizontalPlane() x getVerticalPlane(). */
         Camera camera = MinecraftClient.getInstance().gameRenderer.getCamera();
         Vec3d position = camera.getPos();
         Vector3f right = new Vector3f(camera.getHorizontalPlane()).cross(camera.getVerticalPlane()).normalize();
@@ -226,8 +226,8 @@ public class MinecraftSoundCapture implements SoundInstanceListener
             return;
         }
 
-        /* Attenuation distance in blocks. Newer MC hands this to onSoundPlayed directly;
-         * on 1.20.1 we reproduce vanilla's SoundSystem#play formula (raw volume, not clamped). */
+        /* Attenuation distance in blocks, following vanilla's SoundEngine#play
+         * formula (raw volume, not clamped). */
         float range = Math.max(instance.getVolume(), 1F) * sound.getAttenuation();
 
         /* Match vanilla's clamps. The player's category/master sliders are deliberately

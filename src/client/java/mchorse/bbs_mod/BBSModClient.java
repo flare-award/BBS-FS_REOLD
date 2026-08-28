@@ -683,9 +683,9 @@ public class BBSModClient implements ClientModInitializer
         /* Baked structures hold sprite UVs — stale after resource reload (pack switch, F3+A) */
         InvalidateRenderStateCallback.EVENT.register(BakedStructure::invalidateAll);
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) ->
+        HudRenderCallback.EVENT.register((drawContext, tickCounter) ->
         {
-            BBSRendering.renderHud(drawContext, tickDelta);
+            BBSRendering.renderHud(drawContext, tickCounter.getTickDelta(false));
 
             if (gunZoom != null)
             {
