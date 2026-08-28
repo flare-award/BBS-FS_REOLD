@@ -109,7 +109,7 @@ public class GameRendererMixin
 
         CameraController controller = BBSModClient.getCameraController();
 
-        controller.setup(controller.camera, tickCounter.getTickDelta(true));
+        controller.setup(controller.camera, tickCounter.tickDelta);
     }
 
     /**

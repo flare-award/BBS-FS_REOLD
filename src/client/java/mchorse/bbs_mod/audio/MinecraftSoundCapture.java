@@ -181,7 +181,7 @@ public class MinecraftSoundCapture implements SoundInstanceListener
     }
 
     @Override
-    public void onSoundPlayed(SoundInstance instance, WeightedSoundSet soundSet)
+    public void onSoundPlayed(SoundInstance instance, WeightedSoundSet soundSet, float range)
     {
         if (!this.active)
         {
@@ -191,7 +191,7 @@ public class MinecraftSoundCapture implements SoundInstanceListener
         /* Broken third-party sound instances must never break the recording */
         try
         {
-            this.capture(instance);
+            this.capture(instance, range);
         }
         catch (Exception e)
         {
@@ -199,7 +199,7 @@ public class MinecraftSoundCapture implements SoundInstanceListener
         }
     }
 
-    private void capture(SoundInstance instance)
+    private void capture(SoundInstance instance, float range)
     {
         SoundCategory category = instance.getCategory();
 
@@ -226,12 +226,10 @@ public class MinecraftSoundCapture implements SoundInstanceListener
             return;
         }
 
-        /* Attenuation distance in blocks, following vanilla's SoundEngine#play
-         * formula (raw volume, not clamped). */
-        float range = Math.max(instance.getVolume(), 1F) * sound.getAttenuation();
-
-        /* Match vanilla's clamps. The player's category/master sliders are deliberately
-         * not applied, so the exported mix doesn't depend on personal volume settings. */
+        /* Attenuation distance in blocks; vanilla hands it to onSoundPlayed
+         * directly. Match vanilla's clamps. The player's category/master sliders
+         * are deliberately not applied, so the exported mix doesn't depend on
+         * personal volume settings. */
         float volume = MathUtils.clamp(instance.getVolume(), 0F, 1F);
         float pitch = MathUtils.clamp(instance.getPitch(), 0.5F, 2F);
         boolean loop = instance.isRepeatable() && instance.getRepeatDelay() == 0;
