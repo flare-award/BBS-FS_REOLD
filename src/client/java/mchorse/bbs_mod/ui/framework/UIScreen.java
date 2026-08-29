@@ -139,6 +139,12 @@ public class UIScreen extends Screen implements IFileDropListener
     @Override
     public void resize(MinecraftClient client, int width, int height)
     {
+        /* Since 1.21 MinecraftClient.setScreen calls onDisplayed() BEFORE init(client, w, h) -
+         * in 1.20.1 it was the other way round. onDisplayed() asks for a resolution refresh, so
+         * resize() lands here while Screen.client is still null, and super.resize() ->
+         * clearAndInit() -> setInitialFocus() reads it for the navigation type. Attach it by hand. */
+        this.client = client;
+
         super.resize(client, width, height);
 
         this.menu.resize(width, height);
