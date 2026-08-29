@@ -74,7 +74,7 @@ public class WorldRendererMixin
     }
 
     @Inject(method = "renderLayer", at = @At("HEAD"), cancellable = true)
-    public void onRenderLayer(RenderLayer renderLayer, MatrixStack matrices, double cameraX, double cameraY, double cameraZ, Matrix4f positionMatrix, CallbackInfo info)
+    public void onRenderLayer(RenderLayer renderLayer, double cameraX, double cameraY, double cameraZ, Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo info)
     {
         /* Iris' shadow pass re-runs renderLayer into the shadow map early in the frame — its
          * translucent layer must not fire the flush, or the queue deactivates before the main
@@ -91,18 +91,18 @@ public class WorldRendererMixin
 
         if (BBSSettings.chromaSkyEnabled.get() && !BBSSettings.chromaSkyTerrain.get())
         {
-            BBSRendering.onRenderChunkLayer(matrices);
+            BBSRendering.onRenderChunkLayer(positionMatrix);
 
             info.cancel();
         }
     }
 
     @Inject(method = "renderLayer", at = @At("TAIL"))
-    public void onRenderChunkLayer(RenderLayer layer, MatrixStack stack, double x, double y, double z, Matrix4f positionMatrix, CallbackInfo info)
+    public void onRenderChunkLayer(RenderLayer layer, double x, double y, double z, Matrix4f positionMatrix, Matrix4f projectionMatrix, CallbackInfo info)
     {
         if (layer == RenderLayer.getSolid())
         {
-            BBSRendering.onRenderChunkLayer(stack);
+            BBSRendering.onRenderChunkLayer(positionMatrix);
         }
     }
 

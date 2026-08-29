@@ -482,8 +482,14 @@ public class BBSRendering
         pendingExportResolutionAction = action;
     }
 
-    public static void onRenderChunkLayer(MatrixStack stack)
+    /* Since 1.21.1 WorldRenderer.renderLayer no longer carries a MatrixStack - it hands over the
+     * position matrix that used to be that stack's current entry, so the stack is rebuilt from it. */
+    public static void onRenderChunkLayer(Matrix4f positionMatrix)
     {
+        MatrixStack stack = new MatrixStack();
+
+        stack.multiplyPositionMatrix(positionMatrix);
+
         WorldRenderContextImpl worldRenderContext = new WorldRenderContextImpl();
         MinecraftClient mc = MinecraftClient.getInstance();
 
