@@ -33,7 +33,14 @@ void main()
 {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
-    vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
+    /* fog_distance lost its modelViewMat parameter in 1.21, so the distance is computed
+     * here instead of through the import - same metric in every version, and it cannot
+     * break again on the next signature change. */
+    vec3 fogPos = (ModelViewMat * vec4(Position, 1.0)).xyz;
+
+    vertexDistance = FogShape == 0
+        ? length(fogPos)
+        : max(abs(fogPos.x), max(abs(fogPos.y), abs(fogPos.z)));
     vec3 fixNormal = normalize(NormalMat * Normal);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, fixNormal, Color);
     lightMapColor = texelFetch(Sampler2, UV2 / 16, 0);
