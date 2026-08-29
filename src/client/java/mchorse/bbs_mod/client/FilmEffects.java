@@ -1173,7 +1173,7 @@ public class FilmEffects
             RenderSystem.enableDepthTest();
             RenderSystem.enableCull();
             RenderSystem.disableBlend();
-            modelViewStack.pop();
+            modelViewStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
         }
@@ -1232,7 +1232,7 @@ public class FilmEffects
             RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.enableCull();
-            modelViewStack.pop();
+            modelViewStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
         }

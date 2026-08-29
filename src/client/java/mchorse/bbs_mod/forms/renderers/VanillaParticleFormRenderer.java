@@ -16,7 +16,7 @@ import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.joml.Matrices;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.argument.ParticleArgument;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.client.render.Camera;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleType;
@@ -317,7 +317,7 @@ public class VanillaParticleFormRenderer extends FormRenderer<VanillaParticleFor
             {
                 /* The per-type ParametersReader is gone since 1.21; the brigadier argument reader
                  * parses the very same "id + arguments" string and knows about the registries. */
-                return ParticleArgument.readParameters(new StringReader(" " + settings.arguments),
+                return ParticleEffectArgumentType.readParameters(new StringReader(" " + settings.arguments),
                     MinecraftClient.getInstance().world.getRegistryManager());
             }
         }

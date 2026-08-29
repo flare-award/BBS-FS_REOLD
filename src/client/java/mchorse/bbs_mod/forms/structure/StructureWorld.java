@@ -16,6 +16,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.world.tick.TickManager;
 import net.minecraft.recipe.BrewingRecipeRegistry;import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -50,6 +51,7 @@ import java.util.Map;
 public class StructureWorld extends World
 {
     private final ClientWorld delegate;
+    private final TickManager tickManager = new TickManager();
     private final StructureRenderData data;
     private final Map<BlockPos, BlockEntity> blockEntities;
 
@@ -207,6 +209,12 @@ public class StructureWorld extends World
     }
 
     /* 1.21 keys map state by MapId instead of a string, and dropped getNextMapId entirely. */
+    @Override
+    public TickManager getTickManager()
+    {
+        return this.tickManager;
+    }
+
     @Override
     public MapIdComponent increaseAndGetMapId()
     {
