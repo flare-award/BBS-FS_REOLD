@@ -25,6 +25,7 @@ import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.entity.EntityLookup;
 import net.minecraft.world.event.GameEvent;
 import net.minecraft.world.tick.QueryableTickScheduler;
+import net.minecraft.world.tick.TickManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -50,6 +51,7 @@ public class StructureWorld extends World
     private final ClientWorld delegate;
     private final StructureRenderData data;
     private final Map<BlockPos, BlockEntity> blockEntities;
+    private final TickManager tickManager = new TickManager();
 
     private StructureWorld(ClientWorld delegate, StructureRenderData data, Map<BlockPos, BlockEntity> blockEntities)
     {
@@ -93,6 +95,12 @@ public class StructureWorld extends World
     }
 
     /* --- Structure-backed reads --------------------------------------------------------------- */
+
+    @Override
+    public TickManager getTickManager()
+    {
+        return this.tickManager;
+    }
 
     @Override
     public BlockState getBlockState(BlockPos pos)

@@ -14,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(InGameHud.class)
 public class InGameHudMixin
 {
+    /* InGameHud.render is render(DrawContext, float) in 1.20.4 - the
+     * RenderTickCounter parameter only arrives in 1.20.5+. */
     @Inject(method = "render", at = @At(value = "HEAD"), cancellable = true)
     public void render(DrawContext drawContext, float tickDelta, CallbackInfo info)
     {
@@ -28,7 +30,7 @@ public class InGameHudMixin
     }
 
     @Inject(method = "render", at = @At("TAIL"))
-    public void onRenderEnd(CallbackInfo info)
+    public void onRenderEnd(DrawContext drawContext, float tickDelta, CallbackInfo info)
     {
         BBSRendering.onRenderBeforeScreen();
     }

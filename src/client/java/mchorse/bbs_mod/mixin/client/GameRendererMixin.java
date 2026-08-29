@@ -100,6 +100,11 @@ public class GameRendererMixin
      * The controller is set up here rather than from Camera#update, the way
      * the other versions do it, because this one reads the FOV before it
      * updates the camera.
+     *
+     * The parameters are the 1.20.4 signature of renderWorld(float tickDelta,
+     * long limitTime, MatrixStack matrices) - RenderTickCounter only replaces
+     * them in 1.20.5+, and an injection whose descriptor does not match the
+     * target's stops the whole mixin (and with it the game) at class load.
      */
     @Inject(at = @At("HEAD"), method = "renderWorld")
     private void onWorldRenderBegin(float tickDelta, long limitTime, MatrixStack matrices, CallbackInfo callbackInfo)
@@ -146,6 +151,11 @@ public class GameRendererMixin
      * culling stays conservative when zoomed all the way in; the same bound
      * pushes its near plane back, so the frustum never culls a section the
      * render would still have drawn.
+     *
+     * Both descriptors and indices are the 1.20.4 shapes: setupFrustum
+     * (MatrixStack, Vec3d, Matrix4f) and render(MatrixStack, float, long,
+     * boolean, Camera, GameRenderer, LightmapTextureManager, Matrix4f), the
+     * projection being the last argument of each.
      */
     @ModifyArg(
         method = "renderWorld",
