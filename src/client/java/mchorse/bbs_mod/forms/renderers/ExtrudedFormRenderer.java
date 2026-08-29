@@ -55,9 +55,11 @@ public class ExtrudedFormRenderer extends FormRenderer<ExtrudedForm>
         stack.scale(1.5F, 1.5F, 4F);
         stack.scale(this.form.uiScale.get(), this.form.uiScale.get(), this.form.uiScale.get());
 
-        /* Shading fix */
-        stack.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
-        stack.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
+        /* No manual normal correction here. The uiMatrix carries a negative Y, and
+         * MatrixStackUtils.multiply already folds it into the normal matrix as a single
+         * diag(1,-1,1); the old "shading fix" applied the negation a second time, flipping the
+         * normals back against the mirrored winding, which is what sliced the texture in the
+         * Morphing and model-block previews while the world render (no such fix) was fine. */
 
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
         this.renderModel(BBSShaders::getModel,
