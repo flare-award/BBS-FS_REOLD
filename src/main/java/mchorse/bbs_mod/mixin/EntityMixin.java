@@ -25,8 +25,12 @@ public class EntityMixin
     @Inject(method = "getDimensions", at = @At("RETURN"), cancellable = true)
     public void onGetDimensions(CallbackInfoReturnable<EntityDimensions> info)
     {
-        if (this instanceof PlayerEntity player && this instanceof IMorphProvider provider)
+        /* IMorphProvider is an interface, so the instanceof narrows to players on its own; the
+         * player reference then needs the (Type) (Object) this double cast the other morph mixins
+         * use, because this mixin class is not a PlayerEntity in the compiler's eyes. */
+        if (this instanceof IMorphProvider provider)
         {
+            PlayerEntity player = (PlayerEntity) (Object) this;
             Form form = provider.getMorph().getForm();
 
             if (form != null && form.hitbox.get())
