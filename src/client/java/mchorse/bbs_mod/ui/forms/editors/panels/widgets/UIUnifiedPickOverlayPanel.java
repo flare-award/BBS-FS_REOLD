@@ -239,7 +239,8 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
                 return;
             }
 
-            this.itemStack.setCustomName(value.isEmpty() ? null : Text.literal(value));
+            /* Setting the component to null removes it, which is what an empty name means. */
+            this.itemStack.set(DataComponentTypes.CUSTOM_NAME, value.isEmpty() ? null : Text.literal(value));
             this.acceptItem(this.itemStack.copy());
             this.updateItemNbt();
         });
@@ -265,7 +266,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
             try
             {
                 NbtCompound nbt = new StringNbtReader(new StringReader(v.toString())).parseCompound();
-                ItemStack parsed = ItemStack.fromNbt(nbt);
+                ItemStack parsed = ItemStack.fromNbtOrEmpty(MinecraftClient.getInstance().world.getRegistryManager(), nbt);
 
                 this.acceptItem(parsed);
 
@@ -372,9 +373,9 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
 
                 selected.setCount(Math.max(1, this.itemStack.getCount()));
 
-                if (this.itemStack.hasCustomName())
+                if (this.itemStack.contains(DataComponentTypes.CUSTOM_NAME))
                 {
-                    selected.setCustomName(this.itemStack.getName());
+                    selected.set(DataComponentTypes.CUSTOM_NAME, this.itemStack.getName());
                 }
             }
 

@@ -925,7 +925,7 @@ public class Gizmo
 
         /* Bright radial edges at the grab angle and the leading angle, like the axis pie. */
         float thickness = 0.005F * scale;
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         this.pieEdge(builder, mat, right, down, startRad, radius, thickness, r, g, b);
         this.pieEdge(builder, mat, right, down, startRad + sweepRad, radius, thickness, r, g, b);
         BufferRenderer.drawWithGlobalProgram(builder.end());
@@ -1037,7 +1037,7 @@ public class Gizmo
             this.rotateRingVbo.bind();
             this.rotateRingVbo.upload(builder.end());
 
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+            builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
             Draw.sphere(builder, new MatrixStack(), radius, 24, 24, 1F, 1F, 1F, 1F);
             this.rotateSphereVbo.bind();
             this.rotateSphereVbo.upload(builder.end());
@@ -1328,7 +1328,7 @@ public class Gizmo
         BufferRenderer.drawWithGlobalProgram(builder.end());
 
         float lineThickness = 0.005F * scale;
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         
         float endDeg = startDeg + sweepDeg;
         
@@ -1568,7 +1568,7 @@ public class Gizmo
         {
             if (!building)
             {
-                builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+                builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
                 building = true;
             }
 

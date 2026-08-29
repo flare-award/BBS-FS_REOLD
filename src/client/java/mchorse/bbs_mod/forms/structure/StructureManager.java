@@ -149,7 +149,7 @@ public class StructureManager
 
         try
         {
-            NbtCompound root = NbtIo.readCompressed(file.toFile());
+            NbtCompound root = NbtIo.readCompressed(file, NbtSizeTracker.createLimitless());
 
             data = StructureRenderData.parse(id, root);
             CACHE.put(id, data);

@@ -1484,7 +1484,7 @@ public abstract class BaseFilmController
 
         FilmControllerContext filmContext = getFilmControllerContext(context, replay, entity);
 
-        filmContext.transition = getTransition(entity, context.tickDelta());
+        filmContext.transition = getTransition(entity, context.tickCounter().getTickDelta(true));
 
         renderEntity(filmContext);
     }
@@ -1518,7 +1518,7 @@ public abstract class BaseFilmController
             return;
         }
 
-        float transition = context.tickDelta();
+        float transition = context.tickCounter().getTickDelta(true);
 
         /* Vanilla's own render position for this entity (see WorldRenderer#render), so the tag sits
          * exactly above the body instead of above the keyframe the server sent it to. */

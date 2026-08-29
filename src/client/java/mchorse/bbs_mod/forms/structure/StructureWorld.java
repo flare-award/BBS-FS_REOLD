@@ -15,6 +15,8 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.item.map.MapId;
+import net.minecraft.recipe.BrewingRecipeRegistry;import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
@@ -204,22 +206,23 @@ public class StructureWorld extends World
         return null;
     }
 
+    /* 1.21 keys map state by MapId instead of a string, and dropped getNextMapId entirely. */
+    @Override
+    public BrewingRecipeRegistry getBrewingRecipeRegistry()
+    {
+        return BrewingRecipeRegistry.create(this.getEnabledFeatures());
+    }
+
     @Nullable
     @Override
-    public MapState getMapState(String id)
+    public MapState getMapState(MapId id)
     {
         return null;
     }
 
     @Override
-    public void putMapState(String id, MapState state)
+    public void putMapState(MapId id, MapState state)
     {
-    }
-
-    @Override
-    public int getNextMapId()
-    {
-        return 0;
     }
 
     @Override
@@ -248,7 +251,7 @@ public class StructureWorld extends World
     }
 
     @Override
-    public void emitGameEvent(GameEvent event, Vec3d emitterPos, GameEvent.Emitter emitter)
+    public void emitGameEvent(RegistryEntry<GameEvent> event, Vec3d emitterPos, GameEvent.Emitter emitter)
     {
     }
 

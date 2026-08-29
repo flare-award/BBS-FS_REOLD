@@ -254,7 +254,7 @@ public abstract class UIModelRenderer extends UIElement
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.camera.projection, VertexSorter.BY_Z);
-        RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.camera.view).invert());
+        /* TODO 1.21 removed RenderSystem's view rotation matrix - see MatrixStackUtils. */
 
         /* Rendering begins... */
         stack.push();
@@ -262,10 +262,10 @@ public abstract class UIModelRenderer extends UIElement
         stack.translate(-this.camera.position.x, -this.camera.position.y, -this.camera.position.z);
         MatrixStackUtils.multiply(stack, this.transform);
 
+        /* 1.21 dropped the view matrix argument - the shader gets it from the global state. */
         RenderSystem.setupLevelDiffuseLighting(
             new Vector3f(0, 0.85F, -1).normalize(),
-            new Vector3f(0, 0.85F, 1).normalize(),
-            this.camera.view
+            new Vector3f(0, 0.85F, 1).normalize()
         );
 
         if (this.grid)

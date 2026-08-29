@@ -5,7 +5,8 @@ import mchorse.bbs_mod.film.replays.Replay;
 import mchorse.bbs_mod.film.replays.ReplayItemUse;
 import mchorse.bbs_mod.forms.entities.IEntity;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.FoodComponent;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
@@ -85,9 +86,11 @@ public class ItemUseEffects
 
         /* shouldSpawnConsumptionEffects: snacks emit from the first tick, a full
          * meal only after 7 ticks, and either way every 4th tick of the use. */
-        FoodComponent food = use.stack().getItem().getFoodComponent();
+        FoodComponent food = use.stack().get(DataComponentTypes.FOOD);
         int left = Math.round(use.window() - use.elapsed());
-        boolean due = food != null && food.isSnack();
+        /* isSnack() is gone; since 1.21 a snack is simply a short eat time, and 0.8s is what
+         * vanilla's own FoodComponent.Builder.snack() sets. */
+        boolean due = food != null && food.eatSeconds() <= 0.8F;
 
         due |= left <= use.window() - 7F;
 
@@ -160,7 +163,7 @@ public class ItemUseEffects
     {
         World world = entity.getWorld();
 
-        if (world == null || stack.getItem().getFoodComponent() == null)
+        if (world == null || stack.get(DataComponentTypes.FOOD) == null)
         {
             return;
         }

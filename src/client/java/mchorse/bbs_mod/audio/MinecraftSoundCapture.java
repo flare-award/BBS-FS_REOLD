@@ -181,7 +181,7 @@ public class MinecraftSoundCapture implements SoundInstanceListener
     }
 
     @Override
-    public void onSoundPlayed(SoundInstance instance, WeightedSoundSet soundSet)
+    public void onSoundPlayed(SoundInstance instance, WeightedSoundSet soundSet, float range)
     {
         if (!this.active)
         {

@@ -1264,7 +1264,7 @@ public class FilmEffects
 
                 matrices.push();
                 matrices.translate(pos.getX() - cameraPos.x, pos.getY() - cameraPos.y, pos.getZ() - cameraPos.z);
-                mc.getBlockEntityRenderDispatcher().render(entity, context.tickDelta(), matrices, immediate);
+                mc.getBlockEntityRenderDispatcher().render(entity, context.tickCounter().getTickDelta(true), matrices, immediate);
                 matrices.pop();
             }
 

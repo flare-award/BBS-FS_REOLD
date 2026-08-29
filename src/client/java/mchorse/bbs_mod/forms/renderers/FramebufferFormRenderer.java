@@ -314,6 +314,10 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
             return consumer.vertex(matrix, x, y, 0F).texture(u, v).light(light).color(color.r, color.g, color.b, color.a);
         }
 
-        return consumer.vertex(matrix, x, y, 0F).color(color.r, color.g, color.b, color.a).texture(u, v).overlay(overlay).light(light).normal(normal, 0F, 0F, nz);
+        /* normal(Matrix3f, fff) is gone since 1.21 - rotate the normal here, which is all that
+         * overload ever did. */
+        Vector3f n = new Vector3f(0F, 0F, nz).rotate(normal);
+
+        return consumer.vertex(matrix, x, y, 0F).color(color.r, color.g, color.b, color.a).texture(u, v).overlay(overlay).light(light).normal(n.x, n.y, n.z);
     }
 }

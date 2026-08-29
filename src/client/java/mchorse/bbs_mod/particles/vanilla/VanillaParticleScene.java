@@ -252,7 +252,8 @@ public class VanillaParticleScene
     private void renderSheets(float transition)
     {
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder builder = tessellator.getBuffer();
+        /* Since 1.21 a builder only exists once it is begun, so it is made per sheet below. */
+        BufferBuilder builder = null;
 
         /* A billboard is a flat quad spun to face the camera, so which way its
          * vertices wind depends on where that camera is. Vanilla gets away with
@@ -286,7 +287,7 @@ public class VanillaParticleScene
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(true);
 
-            builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
+            builder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
 
             for (Particle particle : this.particles)
             {

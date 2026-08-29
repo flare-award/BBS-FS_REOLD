@@ -428,7 +428,7 @@ public class Batcher2D
         BufferRenderer.drawWithGlobalProgram(builder.end());
 
         /* Draw outer shadow */
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         for (int i = 0; i < segments; i ++)
         {

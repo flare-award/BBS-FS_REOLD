@@ -145,7 +145,7 @@ public class StructureFormRenderer extends FormRenderer<StructureForm>
             {
                 try
                 {
-                    BlockEntity blockEntity = BlockEntity.createFromNbt(e.getKey(), this.data.getBlockState(e.getKey()), e.getValue());
+                    BlockEntity blockEntity = BlockEntity.createFromNbt(e.getKey(), this.data.getBlockState(e.getKey()), e.getValue(), world.getRegistryManager());
 
                     if (blockEntity != null)
                     {
