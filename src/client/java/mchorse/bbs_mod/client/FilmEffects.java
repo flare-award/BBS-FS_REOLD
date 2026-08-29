@@ -1199,7 +1199,7 @@ public class FilmEffects
         VertexSorter previousSorter = RenderSystem.getVertexSorting();
         MatrixStack modelViewStack = RenderSystem.getModelViewStack();
         Matrix4f identity = new Matrix4f();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
 
         RenderSystem.setProjectionMatrix(identity, VertexSorter.BY_Z);
         modelViewStack.push();
@@ -1214,11 +1214,10 @@ public class FilmEffects
 
         try
         {
-            builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-            builder.vertex(identity, -1F, 1F, -1F).next();
-            builder.vertex(identity, -1F, -1F, -1F).next();
-            builder.vertex(identity, 1F, -1F, -1F).next();
-            builder.vertex(identity, 1F, 1F, -1F).next();
+            builder.vertex(identity, -1F, 1F, -1F);
+            builder.vertex(identity, -1F, -1F, -1F);
+            builder.vertex(identity, 1F, -1F, -1F);
+            builder.vertex(identity, 1F, 1F, -1F);
             BufferRenderer.drawWithGlobalProgram(builder.end());
         }
         catch (Exception e)
@@ -1299,10 +1298,9 @@ public class FilmEffects
         float aspect = width / (float) height;
         int flipMode = Math.round(flip);
         Matrix4f identity = new Matrix4f();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
         BBSModClient.getTextures().bindTexture(photo);
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
         /* Counterclockwise from the top left corner */
         float[] corners = {-1F, 1F, -1F, -1F, 1F, -1F, 1F, 1F};
@@ -1330,7 +1328,7 @@ public class FilmEffects
                 u = 1F - u;
             }
 
-            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity).next();
+            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity);
         }
 
         BufferRenderer.drawWithGlobalProgram(builder.end());

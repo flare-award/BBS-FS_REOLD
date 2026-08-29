@@ -5,22 +5,41 @@ import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.forms.renderers.utils.RecolorVertexConsumer;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BufferRenderer;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.util.BufferAllocator;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.SequencedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * A vertex consumer provider that keeps one long-lived {@link BufferBuilder} per render layer and
+ * never lets the layers trip over each other.
+ *
+ * <p>Since 1.21 the vanilla immediate provider hands out a brand new builder per {@code getBuffer}
+ * call and refuses to switch layers before the previous one was drawn ("mismatched begin/end").
+ * Forms deliberately keep several layers alive at once — the structure form fills the terrain
+ * layers, the item and model forms fill entity layers, and the deferred translucent pass draws them
+ * in its own order later — so this provider owns the builders itself and draws them in the order
+ * the layer map was built, which is what keeps opaque geometry in front of translucent geometry.</p>
+ */
 public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immediate
 {
     private static Consumer<RenderLayer> runnables;
+
+    private final BufferAllocator fallbackAllocator;
+    private final Map<RenderLayer, BufferAllocator> layerAllocators;
+    private final Map<RenderLayer, BufferBuilder> builders = new LinkedHashMap<>();
 
     private Function<VertexConsumer, VertexConsumer> substitute;
     private boolean ui;
@@ -43,9 +62,12 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
         runnables = null;
     }
 
-    public CustomVertexConsumerProvider(BufferBuilder fallback, Map<RenderLayer, BufferBuilder> layers)
+    public CustomVertexConsumerProvider(BufferAllocator fallbackAllocator, SequencedMap<RenderLayer, BufferAllocator> layerAllocators)
     {
-        super(fallback, layers);
+        super(fallbackAllocator, layerAllocators);
+
+        this.fallbackAllocator = fallbackAllocator;
+        this.layerAllocators = layerAllocators;
     }
 
     public void setSubstitute(Function<VertexConsumer, VertexConsumer> substitute)
@@ -66,7 +88,11 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
     @Override
     public VertexConsumer getBuffer(RenderLayer renderLayer)
     {
-        VertexConsumer buffer = super.getBuffer(renderLayer);
+        BufferBuilder buffer = this.builders.computeIfAbsent(renderLayer, layer -> new BufferBuilder(
+            this.layerAllocators.getOrDefault(layer, this.fallbackAllocator),
+            layer.getDrawMode(),
+            layer.getVertexFormat()
+        ));
 
         if (this.substitute != null)
         {
@@ -98,48 +124,49 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
 
         if (origin == null || !FormTranslucentQueue.isActive() || !(textLayer || isDeferrableTranslucent(layer)))
         {
-            super.draw(layer);
+            drawNow(layer, this.builders.get(layer));
 
             return;
         }
 
-        BufferBuilder builder = this.layerBuffers.getOrDefault(layer, this.fallbackBuffer);
-        boolean current = Objects.equals(this.currentLayer, layer.asOptional());
+        BufferBuilder builder = this.builders.get(layer);
 
-        if (!current && builder == this.fallbackBuffer)
+        if (builder == null || builder.vertexCount == 0)
         {
             return;
         }
 
-        if (!this.activeConsumers.remove(builder))
+        /* Ending and uploading the layer's buffer here is what the immediate provider's own
+         * draw would have done — including the vertex layout Iris pins around it. */
+        boolean extended = BBSRendering.beginIrisBufferUpload(builder);
+        VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+
+        try
+        {
+            buffer.bind();
+            buffer.upload(builder.end());
+            VertexBuffer.unbind();
+        }
+        finally
+        {
+            BBSRendering.endIrisBufferUpload(extended);
+        }
+
+        FormTranslucentQueue.add(new FormTranslucentQueue.RenderLayerCommand(layer, buffer, new Matrix4f(RenderSystem.getModelViewMatrix()), new Vector3f(origin)));
+    }
+
+    private static void drawNow(RenderLayer layer, BufferBuilder builder)
+    {
+        if (builder == null)
         {
             return;
         }
 
-        if (builder.isBuilding())
+        BuiltBuffer built = builder.endNullable();
+
+        if (built != null)
         {
-            /* Ending and uploading the layer's buffer here is what the immediate provider's own
-             * draw would have done — including the vertex layout Iris pins around it. */
-            boolean extended = BBSRendering.beginIrisBufferUpload(builder);
-            VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-
-            try
-            {
-                buffer.bind();
-                buffer.upload(builder.end());
-                VertexBuffer.unbind();
-            }
-            finally
-            {
-                BBSRendering.endIrisBufferUpload(extended);
-            }
-
-            FormTranslucentQueue.add(new FormTranslucentQueue.RenderLayerCommand(layer, buffer, new Matrix4f(RenderSystem.getModelViewMatrix()), new Vector3f(origin)));
-        }
-
-        if (current)
-        {
-            this.currentLayer = java.util.Optional.empty();
+            BufferRenderer.drawWithGlobalProgram(built);
         }
     }
 
@@ -152,7 +179,9 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
 
     public void draw()
     {
-        super.draw();
+        /* Insertion order: the layer map is built opaque-first, so opaque writes depth before the
+         * translucent layers are drawn over it. */
+        this.builders.forEach(CustomVertexConsumerProvider::drawNow);
 
         if (this.ui)
         {

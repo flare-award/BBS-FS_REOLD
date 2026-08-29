@@ -96,9 +96,9 @@ public class ReplayItemUse
         {
             case EAT:
             case DRINK:
-                return stack.getMaxUseTime() > 0 ? stack.getMaxUseTime() : 32F;
+                return stack.getMaxUseTime(null) > 0 ? stack.getMaxUseTime(null) : 32F;
             case CROSSBOW:
-                return Math.max(1, CrossbowItem.getPullTime(stack));
+                return Math.max(1, CrossbowItem.getPullTime(stack, null));
             case SPEAR:
                 return 10F;
             default:

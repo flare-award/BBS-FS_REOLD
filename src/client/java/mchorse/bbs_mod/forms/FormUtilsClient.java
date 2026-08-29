@@ -34,15 +34,16 @@ import mchorse.bbs_mod.ui.framework.UIContext;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.chunk.BlockBufferBuilderStorage;
+import net.minecraft.client.render.chunk.BlockBufferAllocatorStorage;
 import net.minecraft.client.render.model.ModelLoader;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.util.Util;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
+import java.util.SequencedMap;
 import java.util.Stack;
 
 public class FormUtilsClient
@@ -53,8 +54,8 @@ public class FormUtilsClient
 
     static
     {
-        BlockBufferBuilderStorage storage = new BlockBufferBuilderStorage();
-        SortedMap sortedMap = Util.make(new Object2ObjectLinkedOpenHashMap(), map -> {
+        BlockBufferAllocatorStorage storage = new BlockBufferAllocatorStorage();
+        SequencedMap<RenderLayer, BufferAllocator> sortedMap = Util.make(new Object2ObjectLinkedOpenHashMap<RenderLayer, BufferAllocator>(), map -> {
             map.put(TexturedRenderLayers.getEntitySolid(), storage.get(RenderLayer.getSolid()));
             map.put(TexturedRenderLayers.getEntityCutout(), storage.get(RenderLayer.getCutout()));
             map.put(TexturedRenderLayers.getBannerPatterns(), storage.get(RenderLayer.getCutoutMipped()));
@@ -73,11 +74,9 @@ public class FormUtilsClient
             assignBufferBuilder(map, TexturedRenderLayers.getShulkerBoxes());
             assignBufferBuilder(map, TexturedRenderLayers.getSign());
             assignBufferBuilder(map, TexturedRenderLayers.getHangingSign());
-            map.put(TexturedRenderLayers.getChest(), new BufferBuilder(786432));
-            assignBufferBuilder(map, RenderLayer.getArmorGlint());
+            assignBufferAllocator(map, TexturedRenderLayers.getChest(), 786432);
             assignBufferBuilder(map, RenderLayer.getArmorEntityGlint());
             assignBufferBuilder(map, RenderLayer.getGlint());
-            assignBufferBuilder(map, RenderLayer.getDirectGlint());
             assignBufferBuilder(map, RenderLayer.getGlintTranslucent());
             assignBufferBuilder(map, RenderLayer.getEntityGlint());
             assignBufferBuilder(map, RenderLayer.getDirectEntityGlint());
@@ -85,7 +84,7 @@ public class FormUtilsClient
             ModelLoader.BLOCK_DESTRUCTION_RENDER_LAYERS.forEach(renderLayer -> assignBufferBuilder(map, renderLayer));
         });
 
-        customVertexConsumerProvider = new CustomVertexConsumerProvider(new BufferBuilder(1536), sortedMap);
+        customVertexConsumerProvider = new CustomVertexConsumerProvider(new BufferAllocator(1536), sortedMap);
 
         register(BillboardForm.class, BillboardFormRenderer::new);
         register(ExtrudedForm.class, ExtrudedFormRenderer::new);
@@ -102,9 +101,14 @@ public class FormUtilsClient
         register(StructureForm.class, StructureFormRenderer::new);
     }
 
-    private static void assignBufferBuilder(Object2ObjectLinkedOpenHashMap<RenderLayer, BufferBuilder> builderStorage, RenderLayer layer)
+    private static void assignBufferBuilder(SequencedMap<RenderLayer, BufferAllocator> allocatorStorage, RenderLayer layer)
     {
-        builderStorage.put(layer, new BufferBuilder(layer.getExpectedBufferSize()));
+        assignBufferAllocator(allocatorStorage, layer, layer.getExpectedBufferSize());
+    }
+
+    private static void assignBufferAllocator(SequencedMap<RenderLayer, BufferAllocator> allocatorStorage, RenderLayer layer, int size)
+    {
+        allocatorStorage.put(layer, new BufferAllocator(size));
     }
 
     public static CustomVertexConsumerProvider getProvider()

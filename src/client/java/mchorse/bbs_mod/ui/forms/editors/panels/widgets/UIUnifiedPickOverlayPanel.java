@@ -110,7 +110,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                Item item = Registries.ITEM.get(new Identifier(id));
+                Item item = Registries.ITEM.get(Identifier.of(id));
 
                 return new ItemStack(item).getName().getString();
             }
@@ -129,7 +129,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                return Registries.BLOCK.get(new Identifier(id)).getName().getString();
+                return Registries.BLOCK.get(Identifier.of(id)).getName().getString();
             }
             catch (Exception e)
             {
@@ -144,7 +144,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                Identifier rid = new Identifier(id);
+                Identifier rid = Identifier.of(id);
 
                 if (mode == PickerMode.ITEM)
                 {
@@ -359,7 +359,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
 
         if (this.mode == PickerMode.ITEM)
         {
-            Item item = Registries.ITEM.get(new Identifier(id));
+            Item item = Registries.ITEM.get(Identifier.of(id));
             ItemStack selected;
 
             if (this.itemStack != null && !this.itemStack.isEmpty() && this.itemStack.getItem() == item)
@@ -385,7 +385,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         }
         else
         {
-            Block block = Registries.BLOCK.get(new Identifier(id));
+            Block block = Registries.BLOCK.get(Identifier.of(id));
             BlockState selectedState = block.getDefaultState();
 
             if (this.blockState != null && this.blockState.getBlock() == block)

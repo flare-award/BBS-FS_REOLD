@@ -898,7 +898,7 @@ public class Gizmo
         float g = Colors.getG(color);
         float b = Colors.getB(color);
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -910,16 +910,15 @@ public class Gizmo
         Vector3f p1 = new Vector3f();
         Vector3f p2 = new Vector3f();
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         for (int i = 0; i < segments; i++)
         {
             this.pieRim(p1, right, down, startRad + step * i, radius);
             this.pieRim(p2, right, down, startRad + step * (i + 1), radius);
 
-            builder.vertex(mat, 0, 0, 0).color(r, g, b, 0.25F).next();
-            builder.vertex(mat, p1.x, p1.y, p1.z).color(r, g, b, 0.25F).next();
-            builder.vertex(mat, p2.x, p2.y, p2.z).color(r, g, b, 0.25F).next();
+            builder.vertex(mat, 0, 0, 0).color(r, g, b, 0.25F);
+            builder.vertex(mat, p1.x, p1.y, p1.z).color(r, g, b, 0.25F);
+            builder.vertex(mat, p2.x, p2.y, p2.z).color(r, g, b, 0.25F);
         }
 
         BufferRenderer.drawWithGlobalProgram(builder.end());
@@ -955,13 +954,13 @@ public class Gizmo
         this.pieRim(rim, right, down, angle, radius);
         this.pieRim(perp, right, down, angle + (float) (Math.PI / 2D), thickness);
 
-        builder.vertex(mat, perp.x, perp.y, perp.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, -perp.x, -perp.y, -perp.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, rim.x - perp.x, rim.y - perp.y, rim.z - perp.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, perp.x, perp.y, perp.z).color(r, g, b, 1F);
+        builder.vertex(mat, -perp.x, -perp.y, -perp.z).color(r, g, b, 1F);
+        builder.vertex(mat, rim.x - perp.x, rim.y - perp.y, rim.z - perp.z).color(r, g, b, 1F);
 
-        builder.vertex(mat, perp.x, perp.y, perp.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, rim.x - perp.x, rim.y - perp.y, rim.z - perp.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, rim.x + perp.x, rim.y + perp.y, rim.z + perp.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, perp.x, perp.y, perp.z).color(r, g, b, 1F);
+        builder.vertex(mat, rim.x - perp.x, rim.y - perp.y, rim.z - perp.z).color(r, g, b, 1F);
+        builder.vertex(mat, rim.x + perp.x, rim.y + perp.y, rim.z + perp.z).color(r, g, b, 1F);
     }
 
     private float getAxesDistanceScale(MatrixStack stack)
@@ -987,8 +986,7 @@ public class Gizmo
             return;
         }
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         float size = 10000F;
         float t = 0.005F;
@@ -1030,12 +1028,11 @@ public class Gizmo
             this.rotateRingVbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
             this.rotateSphereVbo = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
-            BufferBuilder builder = Tessellator.getInstance().getBuffer();
+            BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
             float radius = 0.22F * scale;
             float thicknessRing = 0.02F * scale * thickness;
 
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
             Draw.arc3D(builder, new MatrixStack(), Axis.Y, radius, thicknessRing, 1F, 1F, 1F, 0F, 360F);
             this.rotateRingVbo.bind();
             this.rotateRingVbo.upload(builder.end());
@@ -1182,9 +1179,8 @@ public class Gizmo
             return;
         }
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         Draw.arc3D(builder, stack, axis, radius, thickness, r, g, b, arc.x, arc.y);
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         BufferRenderer.drawWithGlobalProgram(builder.end());
@@ -1292,7 +1288,7 @@ public class Gizmo
         float b = Colors.getB(color);
         float a = 0.25F;
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         Matrix4f mat = stack.peek().getPositionMatrix();
 
         RenderSystem.enableBlend();
@@ -1301,7 +1297,6 @@ public class Gizmo
         RenderSystem.depthFunc(GL11.GL_ALWAYS);
         RenderSystem.disableCull();
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         int segments = Math.max(12, (int) (Math.abs(sweepDeg) / 360F * 64F));
         float step = sweepDeg / segments;
@@ -1316,17 +1311,17 @@ public class Gizmo
             float x2 = (float) Math.cos(a2) * radius;
             float z2 = (float) Math.sin(a2) * radius;
 
-            builder.vertex(mat, 0, 0, 0).color(r, g, b, a).next();
+            builder.vertex(mat, 0, 0, 0).color(r, g, b, a);
             
             if (sweepDeg > 0)
             {
-                builder.vertex(mat, x1, 0, z1).color(r, g, b, a).next();
-                builder.vertex(mat, x2, 0, z2).color(r, g, b, a).next();
+                builder.vertex(mat, x1, 0, z1).color(r, g, b, a);
+                builder.vertex(mat, x2, 0, z2).color(r, g, b, a);
             }
             else
             {
-                builder.vertex(mat, x2, 0, z2).color(r, g, b, a).next();
-                builder.vertex(mat, x1, 0, z1).color(r, g, b, a).next();
+                builder.vertex(mat, x2, 0, z2).color(r, g, b, a);
+                builder.vertex(mat, x1, 0, z1).color(r, g, b, a);
             }
         }
         
@@ -1344,22 +1339,22 @@ public class Gizmo
         
         Vector3f p1 = new Vector3f(-sz, 0, sx).normalize().mul(lineThickness);
         
-        builder.vertex(mat, p1.x, 0, p1.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, -p1.x, 0, -p1.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, sx - p1.x, 0, sz - p1.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, p1.x, 0, p1.z).color(r, g, b, 1F);
+        builder.vertex(mat, -p1.x, 0, -p1.z).color(r, g, b, 1F);
+        builder.vertex(mat, sx - p1.x, 0, sz - p1.z).color(r, g, b, 1F);
         
-        builder.vertex(mat, p1.x, 0, p1.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, sx - p1.x, 0, sz - p1.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, sx + p1.x, 0, sz + p1.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, p1.x, 0, p1.z).color(r, g, b, 1F);
+        builder.vertex(mat, sx - p1.x, 0, sz - p1.z).color(r, g, b, 1F);
+        builder.vertex(mat, sx + p1.x, 0, sz + p1.z).color(r, g, b, 1F);
         
         Vector3f p2 = new Vector3f(-ez, 0, ex).normalize().mul(lineThickness);
-        builder.vertex(mat, p2.x, 0, p2.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, -p2.x, 0, -p2.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, ex - p2.x, 0, ez - p2.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, p2.x, 0, p2.z).color(r, g, b, 1F);
+        builder.vertex(mat, -p2.x, 0, -p2.z).color(r, g, b, 1F);
+        builder.vertex(mat, ex - p2.x, 0, ez - p2.z).color(r, g, b, 1F);
         
-        builder.vertex(mat, p2.x, 0, p2.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, ex - p2.x, 0, ez - p2.z).color(r, g, b, 1F).next();
-        builder.vertex(mat, ex + p2.x, 0, ez + p2.z).color(r, g, b, 1F).next();
+        builder.vertex(mat, p2.x, 0, p2.z).color(r, g, b, 1F);
+        builder.vertex(mat, ex - p2.x, 0, ez - p2.z).color(r, g, b, 1F);
+        builder.vertex(mat, ex + p2.x, 0, ez + p2.z).color(r, g, b, 1F);
 
         BufferRenderer.drawWithGlobalProgram(builder.end());
 
@@ -1500,7 +1495,7 @@ public class Gizmo
         axisSize *= scale * this.combinedInnerScale();
         axisOffset *= scale * thickness;
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         boolean building = false;
 
         if (showRotate)
@@ -1510,7 +1505,6 @@ public class Gizmo
 
         if (showMove || showScale)
         {
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
             building = true;
 
             /* The bars and planes read as move when move is on screen and as
@@ -1812,7 +1806,7 @@ public class Gizmo
 
         if (showMove || showScale)
         {
-            BufferBuilder builder = Tessellator.getInstance().getBuffer();
+            BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
             /* The bar reads as move when move is on screen (combined) and as scale
              * only when scale stands alone; the scale handle then lives on the end
@@ -1824,7 +1818,6 @@ public class Gizmo
             Handle planeXY = showMove ? Handle.MOVE_XY : Handle.SCALE_XY;
             Handle planeZY = showMove ? Handle.MOVE_ZY : Handle.SCALE_ZY;
 
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
             if (active == null || active == barX) Draw.fillBox(builder, stack, 0, -axisOffset, -axisOffset, axisSize, axisOffset, axisOffset, barX.index / 255F, 0F, 0F);
             if (active == null || active == barY) Draw.fillBox(builder, stack, -axisOffset, 0, -axisOffset, axisOffset, axisSize, axisOffset, barY.index / 255F, 0F, 0F);

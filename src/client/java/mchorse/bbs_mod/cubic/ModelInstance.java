@@ -545,8 +545,7 @@ public class ModelInstance implements IModelInstance
 
         if (cpuGeometry)
         {
-            builder = Tessellator.getInstance().getBuffer();
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+            builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
         }
 
         CubicRenderer.processRenderModel(renderProcessor, builder, stack, model);
@@ -682,9 +681,8 @@ public class ModelInstance implements IModelInstance
                 renderProcessor.setColor(color.r, color.g, color.b, color.a);
                 RenderSystem.setShader(() -> shader);
 
-                BufferBuilder builder = Tessellator.getInstance().getBuffer();
+                BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
-                builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
                 CubicRenderer.processRenderModel(renderProcessor, builder, stack, model);
                 this.drawImmediate(builder, shader, stack, null, stencilMap, BBSModClient.getTextures().getLastBound(), color.a);
             }

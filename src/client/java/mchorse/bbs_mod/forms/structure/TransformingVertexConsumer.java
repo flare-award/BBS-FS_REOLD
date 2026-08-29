@@ -41,7 +41,7 @@ public class TransformingVertexConsumer implements VertexConsumer
     }
 
     @Override
-    public VertexConsumer vertex(double x, double y, double z)
+    public VertexConsumer vertex(float x, float y, float z)
     {
         this.position.set((float) x + this.offsetX, (float) y + this.offsetY, (float) z + this.offsetZ, 1F);
         this.positionMatrix.transform(this.position);
@@ -92,21 +92,6 @@ public class TransformingVertexConsumer implements VertexConsumer
         return this;
     }
 
-    @Override
-    public void next()
-    {
-        this.delegate.next();
-    }
 
-    @Override
-    public void fixedColor(int red, int green, int blue, int alpha)
-    {
-        this.delegate.fixedColor(red, green, blue, alpha);
-    }
 
-    @Override
-    public void unfixColor()
-    {
-        this.delegate.unfixColor();
-    }
 }

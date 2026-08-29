@@ -3,7 +3,8 @@ package mchorse.bbs_mod.mixin;
 import mchorse.bbs_mod.BBSMod;
 import mchorse.bbs_mod.actions.types.AttackActionClip;
 import mchorse.bbs_mod.actions.types.item.ReleaseUseItemActionClip;
-import net.minecraft.enchantment.EnchantmentHelper;
+import mchorse.bbs_mod.utils.EnchantmentUtils;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -25,7 +26,9 @@ public class LivingEntityMixin
     {
         Entity attacker = source.getAttacker();
 
-        if (!source.isIndirect() && attacker != null && attacker.getClass() == ServerPlayerEntity.class)
+        /* 1.21 dropped DamageSource.isIndirect(); it was exactly "the attacker is not the
+         * causing entity", which is what kept projectile damage from being recorded as a melee hit. */
+        if (attacker != null && attacker == source.getCausingEntity() && attacker.getClass() == ServerPlayerEntity.class)
         {
             BBSMod.getActions().addAction((ServerPlayerEntity) attacker, () ->
             {
@@ -57,7 +60,7 @@ public class LivingEntityMixin
             }
 
             boolean mainHand = player.getActiveHand() == Hand.MAIN_HAND;
-            int charge = active.getMaxUseTime() - player.getItemUseTimeLeft();
+            int charge = active.getMaxUseTime(player) - player.getItemUseTimeLeft();
             ItemStack stack = active.copy();
             ItemStack recordedProjectile = player.getProjectileType(active).copy();
 
@@ -75,7 +78,9 @@ public class LivingEntityMixin
              * asks the WORLD, not the item: a riptide trident released in water
              * or rain launches its owner and is never thrown. The playback fake
              * player always stands dry, so the answer has to be recorded. */
-            boolean riptide = charge >= 10 && EnchantmentHelper.getRiptide(active) > 0 && player.isTouchingWaterOrRain();
+            boolean riptide = charge >= 10
+                && EnchantmentUtils.getLevel(player.getWorld(), Enchantments.RIPTIDE, active) > 0
+                && player.isTouchingWaterOrRain();
 
             BBSMod.getActions().addAction(player, () ->
             {

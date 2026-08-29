@@ -30,7 +30,7 @@ import java.util.Map;
 public class ArmorRenderer
 {
     private static final Map<String, Identifier> ARMOR_TEXTURE_CACHE = Maps.newHashMap();
-    private static final Identifier ELYTRA_TEXTURE = new Identifier("textures/entity/elytra.png");
+    private static final Identifier ELYTRA_TEXTURE = Identifier.of("textures/entity/elytra.png");
 
     private final BipedEntityModel innerModel;
     private final BipedEntityModel outerModel;

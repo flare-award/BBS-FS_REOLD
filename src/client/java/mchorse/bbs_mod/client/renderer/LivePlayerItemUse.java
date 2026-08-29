@@ -109,6 +109,8 @@ public class LivePlayerItemUse
      */
     public static int getTimeLeft()
     {
-        return Math.max(0, getStack().getMaxUseTime() - (int) Math.floor(use.elapsed()) - 1);
+        LivingEntity player = MinecraftClient.getInstance().player;
+
+        return Math.max(0, getStack().getMaxUseTime(player) - (int) Math.floor(use.elapsed()) - 1);
     }
 }

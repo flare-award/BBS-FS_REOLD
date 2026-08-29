@@ -98,7 +98,7 @@ public class DamageControl
          * the capture get a copy of their own. */
         BlockPos key = new BlockPos(pos);
 
-        this.blocks.put(key, new BlockCapture(key, state, entity == null ? null : entity.createNbtWithId()));
+        this.blocks.put(key, new BlockCapture(key, state, entity == null ? null : entity.createNbtWithId(entity.getWorld().getRegistryManager())));
     }
 
     public void addEntity(Entity entity)

@@ -216,7 +216,7 @@ public class UIVanillaSoundList extends UIStringList
     {
         try
         {
-            Identifier soundsJsonId = new Identifier("minecraft", "sounds.json");
+            Identifier soundsJsonId = Identifier.of("minecraft", "sounds.json");
             Optional<Resource> resource = resourceManager.getResource(soundsJsonId);
 
             if (resource.isPresent())
@@ -567,7 +567,7 @@ public class UIVanillaSoundList extends UIStringList
                     return null;
                 }
                 
-                Identifier soundFileId = new Identifier("minecraft", "sounds/" + soundPath);
+                Identifier soundFileId = Identifier.of("minecraft", "sounds/" + soundPath);
                 MinecraftClient client = MinecraftClient.getInstance();
                 Optional<Resource> resource = client.getResourceManager().getResource(soundFileId);
 
@@ -656,7 +656,7 @@ public class UIVanillaSoundList extends UIStringList
                     soundPath = soundPath + ".ogg";
                 }
                 
-                Identifier soundFileId = new Identifier("minecraft", "sounds/" + soundPath);
+                Identifier soundFileId = Identifier.of("minecraft", "sounds/" + soundPath);
                 MinecraftClient client = MinecraftClient.getInstance();
                 Optional<Resource> resource = client.getResourceManager().getResource(soundFileId);
 

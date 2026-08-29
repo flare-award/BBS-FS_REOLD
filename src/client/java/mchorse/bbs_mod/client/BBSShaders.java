@@ -171,14 +171,14 @@ public class BBSShaders
         {
             if (id.getPath().contains("/core/"))
             {
-                return this.manager.getResource(new Identifier(BBSMod.MOD_ID, id.getPath()));
+                return this.manager.getResource(Identifier.of(BBSMod.MOD_ID, id.getPath()));
             }
 
             /* #moj_import always resolves in the minecraft namespace, so our own
              * includes have to be looked up in BBS first, vanilla's second */
             if (id.getPath().contains("/include/"))
             {
-                Optional<Resource> resource = this.manager.getResource(new Identifier(BBSMod.MOD_ID, id.getPath()));
+                Optional<Resource> resource = this.manager.getResource(Identifier.of(BBSMod.MOD_ID, id.getPath()));
 
                 if (resource.isPresent())
                 {

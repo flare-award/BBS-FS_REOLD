@@ -1,7 +1,7 @@
 package mchorse.bbs_mod.utils.sodium;
 
-import me.jellysquid.mods.sodium.client.SodiumClientMod;
-import me.jellysquid.mods.sodium.client.gui.SodiumGameOptions;
+import net.caffeinemc.mods.sodium.client.SodiumClientMod;
+import net.caffeinemc.mods.sodium.client.gui.SodiumGameOptions;
 import mchorse.bbs_mod.forms.renderers.utils.RecolorVertexSodiumConsumer;
 import mchorse.bbs_mod.utils.colors.Color;
 import net.minecraft.client.render.VertexConsumer;

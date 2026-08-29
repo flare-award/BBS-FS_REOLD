@@ -81,6 +81,6 @@ public class ItemUsePose
         ItemStack stack = living.getActiveItem();
         UseAction action = stack.getUseAction();
 
-        return action == UseAction.NONE ? null : new Use(action, living.getItemUseTime(), stack, stack.getMaxUseTime());
+        return action == UseAction.NONE ? null : new Use(action, living.getItemUseTime(), stack, stack.getMaxUseTime(living));
     }
 }

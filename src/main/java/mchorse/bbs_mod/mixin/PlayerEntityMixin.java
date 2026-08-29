@@ -2,9 +2,7 @@ package mchorse.bbs_mod.mixin;
 
 import mchorse.bbs_mod.forms.forms.Form;
 import mchorse.bbs_mod.morphing.IMorphProvider;
-import mchorse.bbs_mod.morphing.Morph;
 import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,37 +52,14 @@ public class PlayerEntityMixin
                 PlayerEntity player = (PlayerEntity) (Object) this;
                 EntityDimensions dimensions = info.getReturnValue();
                 float height = form.hitboxHeight.get() * (player.isSneaking() ? form.hitboxSneakMultiplier.get() : 1F);
+                EntityDimensions morphed = dimensions.fixed()
+                    ? EntityDimensions.fixed(form.hitboxWidth.get(), height)
+                    : EntityDimensions.changing(form.hitboxWidth.get(), height);
 
-                if (dimensions.fixed)
-                {
-                    info.setReturnValue(EntityDimensions.fixed(form.hitboxWidth.get(), height));
-                }
-                else
-                {
-                    info.setReturnValue(EntityDimensions.changing(form.hitboxWidth.get(), height));
-                }
-            }
-        }
-    }
-
-    @Inject(method = "getActiveEyeHeight", at = @At("HEAD"), cancellable = true)
-    public void getActiveEyeHeight(CallbackInfoReturnable<Float> info)
-    {
-        if (this instanceof IMorphProvider provider)
-        {
-            Morph morph = provider.getMorph();
-
-            if (morph != null)
-            {
-                Form form = morph.getForm();
-
-                if (form != null && form.hitbox.get())
-                {
-                    PlayerEntity player = (PlayerEntity) (Object) this;
-                    float height = form.hitboxHeight.get() * (player.isSneaking() ? form.hitboxSneakMultiplier.get() : 1F);
-
-                    info.setReturnValue(form.hitboxEyeHeight.get() * height);
-                }
+                /* Since 1.21 the eye height travels with the dimensions instead of being answered
+                 * by LivingEntity.getActiveEyeHeight(EntityPose, EntityDimensions), which is gone:
+                 * setting it here is what keeps a morphed player looking through its own eyes. */
+                info.setReturnValue(morphed.withEyeHeight(form.hitboxEyeHeight.get() * height));
             }
         }
     }

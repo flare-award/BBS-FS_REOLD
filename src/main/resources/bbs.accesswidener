@@ -14,11 +14,18 @@ accessible class com/mojang/blaze3d/platform/GlStateManager$Texture2DState
 accessible field net/minecraft/client/MinecraftClient framebuffer Lnet/minecraft/client/gl/Framebuffer;
 mutable field net/minecraft/client/MinecraftClient framebuffer Lnet/minecraft/client/gl/Framebuffer;
 
-# BufferBuilder internals for the structure form's fast replay path (bulk byte copy + in-place fixup)
-accessible field net/minecraft/client/render/BufferBuilder buffer Ljava/nio/ByteBuffer;
-accessible field net/minecraft/client/render/BufferBuilder elementOffset I
+# BufferBuilder internals for the structure form's fast replay path (bulk byte copy + in-place fixup).
+# Since 1.21 the builder writes into a BufferAllocator instead of an on-heap ByteBuffer, so the
+# replay reserves a chunk of off-heap memory and points the builder at it (the same way Sodium's
+# own buffer-builder mixin does).
+accessible field net/minecraft/client/render/BufferBuilder allocator Lnet/minecraft/client/util/BufferAllocator;
+accessible field net/minecraft/client/render/BufferBuilder vertexPointer J
 accessible field net/minecraft/client/render/BufferBuilder vertexCount I
-accessible method net/minecraft/client/render/BufferBuilder grow (I)V
+accessible field net/minecraft/client/render/BufferBuilder vertexSizeByte I
+accessible field net/minecraft/client/render/BufferBuilder currentMask I
+accessible field net/minecraft/client/render/BufferBuilder building Z
+accessible field net/minecraft/client/render/BufferBuilder format Lnet/minecraft/client/render/VertexFormat;
+accessible method net/minecraft/client/util/BufferAllocator allocate (I)J
 # The vanilla item model predicates (a bow bending, a shield blocking, a trident
 # lifting) ask an entity what it is using - a film has no such entity, so a
 # stand-in answers them from the clips
