@@ -306,13 +306,9 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             BBSModClient.getTextures().bindTexture(FormMaterials.getProcessed(texture, textureObject, this.form));
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
 
-            /* Diagnostic for the sliced-texture bug: the UI preview is the only place that pairs
-             * the custom non-interleaved VAO with the BBS 'model' shader, and it is the only place
-             * that slices. The vanilla entity shader renders the same VAO correctly (the F7 path
-             * proves it). Forcing the vanilla shader here isolates whether the BBS shader's
-             * attribute assumptions are the culprit. If the texture becomes whole, this becomes the
-             * permanent UI behaviour, at the cost of not previewing BBS-only PBR in the panel. */
-            Supplier<ShaderProgram> mainShader = GameRenderer::getRenderTypeEntityTranslucentCullProgram;
+            Supplier<ShaderProgram> mainShader = (BBSRendering.isIrisShadersEnabled() && BBSRendering.isRenderingWorld()) || !model.isVAORendered()
+                ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
+                : BBSShaders::getModel;
 
             boolean additive = this.form.additiveColor.get();
             this.renderModel(this.entity, mainShader, stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, contextColor, formColor, additive, true, null, context.getTransition(), null);
@@ -343,7 +339,12 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         FormColorBlend.BlendMode blendMode = additive ? FormColorBlend.BlendMode.BRIGHTEN : FormColorBlend.BlendMode.MULTIPLY;
         FormColorBlend.blend(finalColor, formColor, blendMode);
 
-        if (!model.isCulling())
+        /* The UI preview mirrors the model (getUIMatrix scales Y by -1), which flips the triangle
+         * winding. With face culling left on, the GPU then discards the front faces and rasterizes
+         * the inside of the mesh, so the texture reads as torn apart. World and the editor camera
+         * are not mirrored, which is why only the UI preview was broken. Disabling cull for the
+         * mirrored pass restores the front faces. */
+        if (ui || !model.isCulling())
         {
             RenderSystem.disableCull();
         }
@@ -447,7 +448,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         gameRenderer.getOverlayTexture().teardownOverlayColor();
         RenderSystem.disableBlend();
 
-        if (!model.isCulling())
+        if (ui || !model.isCulling())
         {
             RenderSystem.enableCull();
         }
@@ -708,13 +709,9 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
             BBSModClient.getTextures().bindTexture(FormMaterials.getProcessed(texture, textureObject, this.form));
 
-            /* Diagnostic for the sliced-texture bug: the UI preview is the only place that pairs
-             * the custom non-interleaved VAO with the BBS 'model' shader, and it is the only place
-             * that slices. The vanilla entity shader renders the same VAO correctly (the F7 path
-             * proves it). Forcing the vanilla shader here isolates whether the BBS shader's
-             * attribute assumptions are the culprit. If the texture becomes whole, this becomes the
-             * permanent UI behaviour, at the cost of not previewing BBS-only PBR in the panel. */
-            Supplier<ShaderProgram> mainShader = GameRenderer::getRenderTypeEntityTranslucentCullProgram;
+            Supplier<ShaderProgram> mainShader = (BBSRendering.isIrisShadersEnabled() && BBSRendering.isRenderingWorld()) || !model.isVAORendered()
+                ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
+                : BBSShaders::getModel;
 
             RenderSystem.enableDepthTest();
             RenderSystem.enableBlend();
