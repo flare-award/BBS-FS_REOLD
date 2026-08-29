@@ -12,7 +12,6 @@ import mchorse.bbs_mod.items.GunZoom;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
@@ -101,15 +100,20 @@ public class GameRendererMixin
      * The controller is set up here rather than from Camera#update, the way
      * the other versions do it, because this one reads the FOV before it
      * updates the camera.
+     *
+     * The parameters are the 1.20.4 signature of renderWorld(float tickDelta,
+     * long limitTime, MatrixStack matrices) - RenderTickCounter only replaces
+     * them in 1.20.5+, and an injection whose descriptor does not match the
+     * target's stops the whole mixin (and with it the game) at class load.
      */
     @Inject(at = @At("HEAD"), method = "renderWorld")
-    private void onWorldRenderBegin(RenderTickCounter tickCounter, CallbackInfo callbackInfo)
+    private void onWorldRenderBegin(float tickDelta, long limitTime, MatrixStack matrices, CallbackInfo callbackInfo)
     {
         BBSRendering.onWorldRenderBegin();
 
         CameraController controller = BBSModClient.getCameraController();
 
-        controller.setup(controller.camera, tickCounter.tickDelta);
+        controller.setup(controller.camera, tickDelta);
     }
 
     /**
@@ -147,14 +151,19 @@ public class GameRendererMixin
      * culling stays conservative when zoomed all the way in; the same bound
      * pushes its near plane back, so the frustum never culls a section the
      * render would still have drawn.
+     *
+     * Both descriptors and indices are the 1.20.4 shapes: setupFrustum
+     * (MatrixStack, Vec3d, Matrix4f) and render(MatrixStack, float, long,
+     * boolean, Camera, GameRenderer, LightmapTextureManager, Matrix4f), the
+     * projection being the last argument of each.
      */
     @ModifyArg(
         method = "renderWorld",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/WorldRenderer;setupFrustum(Lnet/minecraft/client/render/Camera;Lnet/minecraft/util/math/Vec3d;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"
+            target = "Lnet/minecraft/client/render/WorldRenderer;setupFrustum(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/util/math/Vec3d;Lorg/joml/Matrix4f;)V"
         ),
-        index = 3
+        index = 2
     )
     private Matrix4f onSetupFrustumProjection(Matrix4f projection)
     {
@@ -165,9 +174,9 @@ public class GameRendererMixin
         method = "renderWorld",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/render/RenderTickCounter;ZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V"
+            target = "Lnet/minecraft/client/render/WorldRenderer;render(Lnet/minecraft/client/util/math/MatrixStack;FJZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lnet/minecraft/client/render/LightmapTextureManager;Lorg/joml/Matrix4f;)V"
         ),
-        index = 6
+        index = 7
     )
     private Matrix4f onRenderProjection(Matrix4f projection)
     {
@@ -182,13 +191,13 @@ public class GameRendererMixin
     }
 
     @Inject(at = @At("RETURN"), method = "renderWorld")
-    private void onWorldRenderEnd(RenderTickCounter tickCounter, CallbackInfo callbackInfo)
+    private void onWorldRenderEnd(CallbackInfo callbackInfo)
     {
         BBSRendering.onWorldRenderEnd();
     }
 
     @Inject(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/option/GameOptions;hudHidden:Z", opcode = Opcodes.GETFIELD, ordinal = 0))
-    private void onBeforeHudRendering(RenderTickCounter tickCounter, boolean tick, CallbackInfo info)
+    private void onBeforeHudRendering(float tickDelta, long startTime, boolean tick, CallbackInfo info)
     {
         ICameraController current = BBSModClient.getCameraController().getCurrent();
 
