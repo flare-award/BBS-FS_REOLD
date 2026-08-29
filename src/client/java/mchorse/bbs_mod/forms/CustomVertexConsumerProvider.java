@@ -157,7 +157,10 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
 
     private static void drawNow(RenderLayer layer, BufferBuilder builder)
     {
-        if (builder == null)
+        /* endNullable() calls ensureBuilding() since 1.21, so on a builder that has already
+         * been ended it throws "Not building!" instead of returning null. The builders map
+         * outlives a draw, so a second pass over it used to take the whole screen down. */
+        if (builder == null || !builder.building)
         {
             return;
         }
