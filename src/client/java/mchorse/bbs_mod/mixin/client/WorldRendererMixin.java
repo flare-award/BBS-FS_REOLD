@@ -43,7 +43,7 @@ public class WorldRendererMixin
         FilmEffects.stampPhotoDepthIfPending();
     }
 
-    @Inject(method = "renderSky(Lnet/minecraft/client/util/math/MatrixStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderSky(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
     public void onRenderSky(CallbackInfo info)
     {
         if (BBSSettings.chromaSkyEnabled.get())
