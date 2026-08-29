@@ -91,7 +91,7 @@ public class TrailFormRenderer extends FormRenderer<TrailForm> implements ITicka
             RenderSystem.setShader(GameRenderer::getPositionColorProgram);
             RenderSystem.disableDepthTest();
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
 
             return;
         }
@@ -244,7 +244,7 @@ public class TrailFormRenderer extends FormRenderer<TrailForm> implements ITicka
         RenderSystem.setShader(GameRenderer::getPositionTexProgram);
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableBlend();
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         RenderSystem.enableDepthTest();
 
         stack.pop();

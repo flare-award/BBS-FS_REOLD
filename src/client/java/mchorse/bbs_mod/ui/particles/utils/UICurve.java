@@ -28,6 +28,8 @@ import net.minecraft.client.render.VertexFormats;
 import org.joml.Matrix4f;
 import org.joml.Vector2d;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UICurve extends UIElement
 {
     private UIParticleSchemeSection section;
@@ -289,7 +291,7 @@ public class UICurve extends UIElement
             builder.vertex(matrix, (float) last.x, this.graph.ey(), 0F).color(0.25F, 0.25F, 0.25F, 0.5F);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         Color color = Colors.COLOR;
         LineBuilder line = new LineBuilder(0.75F);

@@ -23,6 +23,8 @@ import net.minecraft.client.render.VertexFormats;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
 {
     private static final Color ENVELOPE_COLOR = new Color(0, 0, 0, 0.25F);
@@ -111,7 +113,7 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
             this.renderSimpleEnvelope(builder, matrix, envelope, duration, x1, y1, x2, y2);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /**

@@ -28,6 +28,8 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class LabelFormRenderer extends FormRenderer<LabelForm>
 {
     public static void fillQuad(BufferBuilder builder, MatrixStack stack, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, float r, float g, float b, float a)
@@ -328,7 +330,7 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
             VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
             buffer.bind();
-            buffer.upload(builder.end());
+            Draw.uploadBuilt(buffer, builder);
             VertexBuffer.unbind();
 
             FormTranslucentQueue.add(new FormTranslucentQueue.VertexBufferCommand(
@@ -339,7 +341,7 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
         }
         else
         {
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         context.stack.pop();

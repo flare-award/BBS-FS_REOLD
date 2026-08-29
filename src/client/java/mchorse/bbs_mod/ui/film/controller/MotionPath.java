@@ -203,7 +203,7 @@ public class MotionPath
             dot(builder, stack, POINT_B, config.currentSize.get(), SCRATCH);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();

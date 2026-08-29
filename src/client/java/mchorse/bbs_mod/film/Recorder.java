@@ -123,7 +123,7 @@ public class Recorder extends WorldFilmController
         transformFrustum(vector, matrix, 0F, 0F);
         Draw.fillBoxTo(builder, stack, x, y, z, x + vector.x, y + vector.y, z + vector.z, thickness, 0F, 0.5F, 1F, 1F);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         RenderSystem.disableDepthTest();
     }

@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class ParticleEmitter
 {
     public ParticleScheme scheme;
@@ -463,7 +465,7 @@ public class ParticleEmitter
 
             RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
             RenderSystem.disableCull();
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
             RenderSystem.enableCull();
         }
     }
@@ -506,7 +508,7 @@ public class ParticleEmitter
             RenderSystem.setShader(program);
             RenderSystem.disableBlend();
             RenderSystem.disableCull();
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
             RenderSystem.enableCull();
         }
 

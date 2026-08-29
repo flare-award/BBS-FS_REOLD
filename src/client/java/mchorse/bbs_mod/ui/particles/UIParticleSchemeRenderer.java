@@ -169,7 +169,7 @@ public class UIParticleSchemeRenderer extends UIModelRenderer
 
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.disableCull();
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         RenderSystem.enableCull();
     }
 

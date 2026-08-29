@@ -60,6 +60,8 @@ import java.util.Map;
  * on the camera timeline, its keyframed channels override the matching sliders for
  * that frame - which is how the filters animate in playback and export alike.</p>
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class FilmEffects
 {
     /* Photo layer modes: over the whole frame, behind the film's actors,
@@ -1219,7 +1221,7 @@ public class FilmEffects
             builder.vertex(identity, -1F, -1F, -1F);
             builder.vertex(identity, 1F, -1F, -1F);
             builder.vertex(identity, 1F, 1F, -1F);
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
         catch (Exception e)
         {
@@ -1332,7 +1334,7 @@ public class FilmEffects
             builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /**

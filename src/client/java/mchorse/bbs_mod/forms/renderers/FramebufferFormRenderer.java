@@ -45,6 +45,8 @@ import org.lwjgl.system.MemoryStack;
 import java.nio.IntBuffer;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
 {
     private static final Quad quad = new Quad();
@@ -287,7 +289,7 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
             VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
             buffer.bind();
-            buffer.upload(builder.end());
+            Draw.uploadBuilt(buffer, builder);
             VertexBuffer.unbind();
 
             Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
@@ -300,7 +302,7 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
         }
         else
         {
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         gameRenderer.getLightmapTextureManager().disable();

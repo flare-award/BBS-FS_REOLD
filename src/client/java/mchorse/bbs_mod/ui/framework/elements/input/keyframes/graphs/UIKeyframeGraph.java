@@ -34,6 +34,8 @@ import org.joml.Matrix4f;
 import java.util.Collections;
 import java.util.List;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIKeyframeGraph implements IUIKeyframeGraph
 {
     protected UIKeyframes keyframes;
@@ -627,7 +629,7 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
 
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     protected void renderGraphPointShapes(UIContext context, BufferBuilder builder, Matrix4f matrix, List keyframes)
@@ -740,7 +742,7 @@ public class UIKeyframeGraph implements IUIKeyframeGraph
         this.renderGraphPointShapes(context, builder, matrix, keyframes);
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         context.batcher.unclip(context);
     }
 

@@ -921,14 +921,14 @@ public class Gizmo
             builder.vertex(mat, p2.x, p2.y, p2.z).color(r, g, b, 0.25F);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         /* Bright radial edges at the grab angle and the leading angle, like the axis pie. */
         float thickness = 0.005F * scale;
         builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         this.pieEdge(builder, mat, right, down, startRad, radius, thickness, r, g, b);
         this.pieEdge(builder, mat, right, down, startRad + sweepRad, radius, thickness, r, g, b);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         RenderSystem.enableCull();
         RenderSystem.disableBlend();
@@ -1008,7 +1008,7 @@ public class Gizmo
 
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.depthFunc(GL11.GL_ALWAYS);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
     }
 
@@ -1035,12 +1035,12 @@ public class Gizmo
 
             Draw.arc3D(builder, new MatrixStack(), Axis.Y, radius, thicknessRing, 1F, 1F, 1F, 0F, 360F);
             this.rotateRingVbo.bind();
-            this.rotateRingVbo.upload(builder.end());
+            this.Draw.uploadBuilt(rotateRingVbo, builder);
 
             builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
             Draw.sphere(builder, new MatrixStack(), radius, 24, 24, 1F, 1F, 1F, 1F);
             this.rotateSphereVbo.bind();
-            this.rotateSphereVbo.upload(builder.end());
+            this.Draw.uploadBuilt(rotateSphereVbo, builder);
 
             VertexBuffer.unbind();
 
@@ -1183,7 +1183,7 @@ public class Gizmo
 
         Draw.arc3D(builder, stack, axis, radius, thickness, r, g, b, arc.x, arc.y);
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     private void drawCachedRingBillboard(MatrixStack stack, VertexBuffer vbo, float r, float g, float b, float a)
@@ -1325,7 +1325,7 @@ public class Gizmo
             }
         }
         
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         float lineThickness = 0.005F * scale;
         builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
@@ -1356,7 +1356,7 @@ public class Gizmo
         builder.vertex(mat, ex - p2.x, 0, ez - p2.z).color(r, g, b, 1F);
         builder.vertex(mat, ex + p2.x, 0, ez + p2.z).color(r, g, b, 1F);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         RenderSystem.enableCull();
         RenderSystem.depthFunc(GL11.GL_LEQUAL);
@@ -1584,7 +1584,7 @@ public class Gizmo
             RenderSystem.setShaderColor(1F, 1F, 1F, BBSSettings.gizmoOpacity.get());
             RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
     }
 
@@ -1863,7 +1863,7 @@ public class Gizmo
 
             RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         RenderSystem.enableDepthTest();

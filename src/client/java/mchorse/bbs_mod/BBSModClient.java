@@ -566,7 +566,7 @@ public class BBSModClient implements ClientModInitializer
 
                     RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-                    BufferRenderer.drawWithGlobalProgram(builder.end());
+                    Draw.drawBuilt(builder);
                     RenderSystem.disableDepthTest();
 
                     stack.pop();

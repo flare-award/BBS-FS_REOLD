@@ -46,6 +46,8 @@ import java.util.List;
  * {@code ParticleMixin} while {@link #render} runs, matching the rest of the
  * preview.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class VanillaParticleScene
 {
     /**
@@ -307,7 +309,7 @@ public class VanillaParticleScene
                 }
             }
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         if (culling)

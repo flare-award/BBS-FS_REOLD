@@ -19,6 +19,8 @@ import java.util.List;
  * This class provides a neat way to construct 2D line
  * segments that is thicker than default OpenGL3 line renderer.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class LineBuilder <T>
 {
     public float thickness;
@@ -94,7 +96,7 @@ public class LineBuilder <T>
                 renderer.render(builder, matrix, point);
             }
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
     }
 }

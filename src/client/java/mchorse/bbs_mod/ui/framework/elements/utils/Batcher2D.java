@@ -26,6 +26,8 @@ import org.lwjgl.opengl.GL11;
 import java.util.List;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class Batcher2D
 {
     /** How far a lit edge is pulled towards white, see {@link #surfaceBox}. */
@@ -194,7 +196,7 @@ public class Batcher2D
 
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         this.context.draw();
     }
@@ -336,7 +338,7 @@ public class Batcher2D
 
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /* Gradients */
@@ -425,7 +427,7 @@ public class Batcher2D
             builder.vertex(matrix4f, (int) (x - Math.cos(a) * offset), (int) (y + Math.sin(a) * offset), 0F).color(opaque);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         /* Draw outer shadow */
         builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
@@ -443,7 +445,7 @@ public class Batcher2D
             builder.vertex(matrix4f, (float) (x - Math.cos(alpha2) * radius), (float) (y + Math.sin(alpha2) * radius), 0F).color(shadow);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /* Outline methods */
@@ -580,7 +582,7 @@ public class Batcher2D
 
         this.fillTexturedBox(builder, matrix, color, x, y, w, h, u1, v1, u2, v2, textureW, textureH);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     public void texturedBox(int texture, int color, float x, float y, float w, float h, float u1, float v1, float u2, float v2, int textureW, int textureH)
@@ -599,7 +601,7 @@ public class Batcher2D
 
         this.fillTexturedBox(builder, matrix, color, x, y, w, h, u1, v1, u2, v2, textureW, textureH);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     private void fillTexturedBox(BufferBuilder builder, Matrix4f matrix, int color, float x, float y, float w, float h, float u1, float v1, float u2, float v2, int textureW, int textureH)
@@ -640,7 +642,7 @@ public class Batcher2D
             this.fillTexturedBox(builder, matrix, color, xx, yy, xw, yh, u, v, u + xw, v + yh, tw, th);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /* Text with default font */

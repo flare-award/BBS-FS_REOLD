@@ -37,6 +37,8 @@ import java.util.Comparator;
  * so the axis balls mean "in front of/behind/beside the record", and both the
  * axes and the attached camera turn together with it.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class OrbitViewGizmo
 {
     public static final int RADIUS = 30;
@@ -374,7 +376,7 @@ public class OrbitViewGizmo
     {
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         batcher.getContext().draw();
     }

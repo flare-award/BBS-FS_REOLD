@@ -33,6 +33,8 @@ import java.util.function.Function;
  * in its own order later — so this provider owns the builders itself and draws them in the order
  * the layer map was built, which is what keeps opaque geometry in front of translucent geometry.</p>
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immediate
 {
     private static Consumer<RenderLayer> runnables;
@@ -144,7 +146,7 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
         try
         {
             buffer.bind();
-            buffer.upload(builder.end());
+            Draw.uploadBuilt(buffer, builder);
             VertexBuffer.unbind();
         }
         finally

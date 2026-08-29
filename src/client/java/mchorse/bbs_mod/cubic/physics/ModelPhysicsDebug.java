@@ -57,6 +57,8 @@ import java.util.Set;
  * vector is carried into the overlay's drawing space); the wind element's size
  * is the arrow length per unit of force.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public final class ModelPhysicsDebug
 {
     private static final float EPS = 1.0e-6f;
@@ -200,7 +202,7 @@ public final class ModelPhysicsDebug
             }
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         stack.pop();
 
@@ -310,7 +312,7 @@ public final class ModelPhysicsDebug
 
             emitLines(lines, matrix, 0F, dash, pts, target, a, config);
 
-            BufferRenderer.drawWithGlobalProgram(lines.end());
+            Draw.drawBuilt(lines);
         }
 
         if (!anyDot && !boxes)
@@ -353,7 +355,7 @@ public final class ModelPhysicsDebug
             DebugOverlay.marker(dots, stack, config.attach.shape.get(), target, unit * config.attach.size.get(), DebugOverlay.rgb(config.attach.color.get()), a);
         }
 
-        BufferRenderer.drawWithGlobalProgram(dots.end());
+        Draw.drawBuilt(dots);
     }
 
     /** The chain's wires plus the bridge to the attach bone — the bridge is always a dashed relationship line. */
@@ -426,7 +428,7 @@ public final class ModelPhysicsDebug
             tips.add(end);
         }
 
-        BufferRenderer.drawWithGlobalProgram(lines.end());
+        Draw.drawBuilt(lines);
 
         BufferBuilder dots = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
@@ -435,7 +437,7 @@ public final class ModelPhysicsDebug
             DebugOverlay.marker(dots, stack, ValueDebugElement.SHAPE_SPHERE, end, unit * 0.05F, color, a);
         }
 
-        BufferRenderer.drawWithGlobalProgram(dots.end());
+        Draw.drawBuilt(dots);
     }
 
     /**

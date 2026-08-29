@@ -6,10 +6,12 @@ import mchorse.bbs_mod.camera.data.Angle;
 import mchorse.bbs_mod.utils.Axis;
 import mchorse.bbs_mod.utils.colors.Colors;
 import mchorse.bbs_mod.utils.MathUtils;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
@@ -18,6 +20,33 @@ import org.joml.Matrix4f;
 
 public class Draw
 {
+    /**
+     * End a builder and draw it, tolerating an empty one. Since 1.21 BufferBuilder.end()
+     * throws IllegalStateException("BufferBuilder was empty") when nothing was written, while
+     * endNullable() returns null - and an element with nothing to draw this frame (a clip with
+     * no keyframes yet, an empty dopesheet) is normal, not an error.
+     */
+    /** Same as {@link #drawBuilt}, for the paths that upload into a VertexBuffer instead. */
+    public static void uploadBuilt(VertexBuffer buffer, BufferBuilder builder)
+    {
+        BuiltBuffer built = builder.endNullable();
+
+        if (built != null)
+        {
+            buffer.upload(built);
+        }
+    }
+
+    public static void drawBuilt(BufferBuilder builder)
+    {
+        BuiltBuffer built = builder.endNullable();
+
+        if (built != null)
+        {
+            BufferRenderer.drawWithGlobalProgram(built);
+        }
+    }
+
     public static void renderBox(MatrixStack stack, double x, double y, double z, double w, double h, double d)
     {
         renderBox(stack, x, y, z, w, h, d, 1, 1, 1);
@@ -59,7 +88,7 @@ public class Draw
         fillBox(builder, stack, -t, -t, -t, t, t, t + fd, r, g, b, a);
         fillBox(builder, stack, -t + fw, -t, -t, t + fw, t, t + fd, r, g, b, a);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         stack.pop();
     }
@@ -174,7 +203,7 @@ public class Draw
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.disableDepthTest();
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     public static void arc3D(BufferBuilder builder, MatrixStack stack, Axis axis, float radius, float thickness, int color)

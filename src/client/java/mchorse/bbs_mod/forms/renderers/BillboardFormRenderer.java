@@ -38,6 +38,8 @@ import org.joml.Vector4f;
 
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class BillboardFormRenderer extends FormRenderer<BillboardForm>
 {
     private static final Quad quad = new Quad();
@@ -265,7 +267,7 @@ public class BillboardFormRenderer extends FormRenderer<BillboardForm>
             VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
             buffer.bind();
-            buffer.upload(builder.end());
+            Draw.uploadBuilt(buffer, builder);
             VertexBuffer.unbind();
 
             Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
@@ -291,7 +293,7 @@ public class BillboardFormRenderer extends FormRenderer<BillboardForm>
                 RenderSystem.disableBlend();
             }
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
 
             if (forcedOpaque)
             {

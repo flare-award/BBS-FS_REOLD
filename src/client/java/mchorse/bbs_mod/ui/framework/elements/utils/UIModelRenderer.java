@@ -34,6 +34,8 @@ import org.lwjgl.opengl.GL11;
  *
  * This base class can be used for full screen model viewer.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public abstract class UIModelRenderer extends UIElement
 {
     private static Vector3d vec = new Vector3d();
@@ -406,6 +408,6 @@ public abstract class UIModelRenderer extends UIElement
             }
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 }

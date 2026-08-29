@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Map;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIKeyframeDopeSheet implements IUIKeyframeGraph
 {
     private static final int POSE_TAB_BASE_INDENT = 4;
@@ -1313,7 +1315,7 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
 
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     private void renderSheetKeyframeShapes(UIContext context, BufferBuilder builder, Matrix4f matrix, Area area, UIKeyframeSheet sheet, int y)
@@ -1414,7 +1416,7 @@ public class UIKeyframeDopeSheet implements IUIKeyframeGraph
         this.renderElementsTopmostKeyframes(context, builder, matrix, area, this.elements, this.getDopeSheetY());
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         context.batcher.unclip(context);
     }
 

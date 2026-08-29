@@ -64,6 +64,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class ModelInstance implements IModelInstance
 {
     /** Identity NormalMat for the welded immediate draw — its normals are already CPU-transformed to world space. */
@@ -581,7 +583,7 @@ public class ModelInstance implements IModelInstance
 
         if (!split && !whole)
         {
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
 
             return;
         }
@@ -592,7 +594,7 @@ public class ModelInstance implements IModelInstance
         VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
         buffer.bind();
-        buffer.upload(builder.end());
+        Draw.uploadBuilt(buffer, builder);
 
         Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
 
