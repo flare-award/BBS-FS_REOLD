@@ -179,7 +179,7 @@ public class ServerNetwork
 
         buf.getBytes(buf.readerIndex(), data);
 
-        send(player, new BBSClientboundPayload(channel, data));
+        ServerPlayNetworking.send(player, new BBSClientboundPayload(channel, data));
     }
 
     /* Handlers */
