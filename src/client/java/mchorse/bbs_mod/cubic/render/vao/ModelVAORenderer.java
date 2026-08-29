@@ -29,6 +29,14 @@ public class ModelVAORenderer
 
     public static void render(ShaderProgram shader, IModelVAO modelVAO, Matrix4f modelView, Matrix3f normalMat, float r, float g, float b, float a, int light, int overlay)
     {
+        /* The BBS core shaders can fail to load (see BBSShaders.load, which logs the name and
+         * returns null). A missing model program means nothing here can be drawn, so skip the
+         * model rather than NPE the whole screen - the UI around it stays usable. */
+        if (shader == null)
+        {
+            return;
+        }
+
         int currentVAO = GL30.glGetInteger(GL30.GL_VERTEX_ARRAY_BINDING);
         int currentElementArrayBuffer = GL30.glGetInteger(GL30.GL_ELEMENT_ARRAY_BUFFER_BINDING);
 
@@ -49,6 +57,11 @@ public class ModelVAORenderer
 
     public static void setupUniforms(ShaderProgram shader, Matrix4f modelView, Matrix3f normalMat)
     {
+        if (shader == null)
+        {
+            return;
+        }
+
         for (int i = 0; i < 12; i++)
         {
             shader.addSampler("Sampler" + i, RenderSystem.getShaderTexture(i));
