@@ -195,7 +195,8 @@ public class IrisUtils
 
         if (pipeline != null)
         {
-            pipeline.getRenderTargetStateListener().setIsMainBound(bound);
+            /* Iris 1.8 folded the render target state listener into the pipeline itself. */
+            pipeline.setIsMainBound(bound);
         }
     }
 
