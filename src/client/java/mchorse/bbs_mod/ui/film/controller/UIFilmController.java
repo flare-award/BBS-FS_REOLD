@@ -1435,14 +1435,14 @@ public class UIFilmController extends UIElement implements GizmoViewport
 
         ShaderProgram previewProgram = BBSShaders.getPickerPreviewProgram();
         Supplier<ShaderProgram> getPickerPreviewProgram = BBSShaders::getPickerPreviewProgram;
-        GlUniform target = previewProgram.getUniform("Target");
+        GlUniform target = previewProgram != null ? previewProgram.getUniform("Target") : null;
 
         if (target != null)
         {
             target.set(index);
         }
 
-        GlUniform highlight = previewProgram.getUniform("HighlightColor");
+        GlUniform highlight = previewProgram != null ? previewProgram.getUniform("HighlightColor") : null;
 
         if (highlight != null)
         {
