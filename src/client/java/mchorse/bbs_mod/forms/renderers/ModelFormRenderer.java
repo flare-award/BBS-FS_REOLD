@@ -356,11 +356,10 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         MatrixStackUtils.multiply(newStack, stack.peek().getPositionMatrix());
         newStack.peek().getNormalMatrix().set(stack.peek().getNormalMatrix());
 
-        if (ui)
-        {
-            newStack.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
-            newStack.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
-        }
+        /* No ui-only normal correction. This block was the single difference between the UI and
+         * the world render of the same model, and the world one is correct: multiply() already
+         * folds the negative-Y of getUIMatrix into the normal matrix, so re-applying the negation
+         * here flipped the normals against the mirrored winding and facetted the preview. */
 
         /* Strictly the world frame: it's what places the model in the world for the simulating subsystems
          * (bone physics resolves gravity, wind and its collisions against it), so falling back to the render
