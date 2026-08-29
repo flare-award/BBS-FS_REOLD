@@ -1035,12 +1035,12 @@ public class Gizmo
 
             Draw.arc3D(builder, new MatrixStack(), Axis.Y, radius, thicknessRing, 1F, 1F, 1F, 0F, 360F);
             this.rotateRingVbo.bind();
-            this.Draw.uploadBuilt(rotateRingVbo, builder);
+            Draw.uploadBuilt(rotateRingVbo, builder);
 
             builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
             Draw.sphere(builder, new MatrixStack(), radius, 24, 24, 1F, 1F, 1F, 1F);
             this.rotateSphereVbo.bind();
-            this.Draw.uploadBuilt(rotateSphereVbo, builder);
+            Draw.uploadBuilt(rotateSphereVbo, builder);
 
             VertexBuffer.unbind();
 
