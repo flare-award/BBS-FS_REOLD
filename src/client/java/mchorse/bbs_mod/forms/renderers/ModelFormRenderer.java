@@ -306,9 +306,13 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
             BBSModClient.getTextures().bindTexture(FormMaterials.getProcessed(texture, textureObject, this.form));
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
 
-            Supplier<ShaderProgram> mainShader = (BBSRendering.isIrisShadersEnabled() && BBSRendering.isRenderingWorld()) || !model.isVAORendered()
-                ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
-                : BBSShaders::getModel;
+            /* Diagnostic for the sliced-texture bug: the UI preview is the only place that pairs
+             * the custom non-interleaved VAO with the BBS 'model' shader, and it is the only place
+             * that slices. The vanilla entity shader renders the same VAO correctly (the F7 path
+             * proves it). Forcing the vanilla shader here isolates whether the BBS shader's
+             * attribute assumptions are the culprit. If the texture becomes whole, this becomes the
+             * permanent UI behaviour, at the cost of not previewing BBS-only PBR in the panel. */
+            Supplier<ShaderProgram> mainShader = GameRenderer::getRenderTypeEntityTranslucentCullProgram;
 
             boolean additive = this.form.additiveColor.get();
             this.renderModel(this.entity, mainShader, stack, model, LightmapTextureManager.pack(15, 15), OverlayTexture.DEFAULT_UV, contextColor, formColor, additive, true, null, context.getTransition(), null);
@@ -704,9 +708,13 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
 
             BBSModClient.getTextures().bindTexture(FormMaterials.getProcessed(texture, textureObject, this.form));
 
-            Supplier<ShaderProgram> mainShader = (BBSRendering.isIrisShadersEnabled() && BBSRendering.isRenderingWorld()) || !model.isVAORendered()
-                ? GameRenderer::getRenderTypeEntityTranslucentCullProgram
-                : BBSShaders::getModel;
+            /* Diagnostic for the sliced-texture bug: the UI preview is the only place that pairs
+             * the custom non-interleaved VAO with the BBS 'model' shader, and it is the only place
+             * that slices. The vanilla entity shader renders the same VAO correctly (the F7 path
+             * proves it). Forcing the vanilla shader here isolates whether the BBS shader's
+             * attribute assumptions are the culprit. If the texture becomes whole, this becomes the
+             * permanent UI behaviour, at the cost of not previewing BBS-only PBR in the panel. */
+            Supplier<ShaderProgram> mainShader = GameRenderer::getRenderTypeEntityTranslucentCullProgram;
 
             RenderSystem.enableDepthTest();
             RenderSystem.enableBlend();
