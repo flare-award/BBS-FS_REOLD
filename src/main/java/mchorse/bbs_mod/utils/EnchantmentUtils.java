@@ -36,7 +36,7 @@ public class EnchantmentUtils
             return 0;
         }
 
-        RegistryEntry<Enchantment> entry = registry.get().getOrEmpty(key).orElse(null);
+        RegistryEntry<Enchantment> entry = registry.get().getEntry(key).orElse(null);
 
         return entry == null ? 0 : EnchantmentHelper.getLevel(entry, stack);
     }

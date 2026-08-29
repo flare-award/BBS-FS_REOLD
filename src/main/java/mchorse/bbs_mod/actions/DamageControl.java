@@ -161,7 +161,7 @@ public class DamageControl
 
             if (block.blockEntity != null)
             {
-                BlockEntity blockEntity = BlockEntity.createFromNbt(block.pos, block.lastState, block.blockEntity);
+                BlockEntity blockEntity = BlockEntity.createFromNbt(block.pos, block.lastState, block.blockEntity, this.world.getRegistryManager());
 
                 /* Null when the block entity's type is gone - a mod removed since the take was
                  * captured. The block itself is already back, which is the most that can be

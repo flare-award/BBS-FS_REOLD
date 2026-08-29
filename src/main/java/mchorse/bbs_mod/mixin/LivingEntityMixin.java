@@ -26,9 +26,9 @@ public class LivingEntityMixin
     {
         Entity attacker = source.getAttacker();
 
-        /* 1.21 dropped DamageSource.isIndirect(); it was exactly "the attacker is not the
-         * causing entity", which is what kept projectile damage from being recorded as a melee hit. */
-        if (attacker != null && attacker == source.getCausingEntity() && attacker.getClass() == ServerPlayerEntity.class)
+        /* 1.21 dropped DamageSource.isIndirect(); it was exactly "the attacker is not the source
+         * entity", which is what kept projectile damage from being recorded as a melee hit. */
+        if (attacker != null && attacker == source.getSource() && attacker.getClass() == ServerPlayerEntity.class)
         {
             BBSMod.getActions().addAction((ServerPlayerEntity) attacker, () ->
             {

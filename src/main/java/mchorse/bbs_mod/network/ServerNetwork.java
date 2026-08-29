@@ -30,7 +30,7 @@ import mchorse.bbs_mod.utils.PermissionUtils;
 import mchorse.bbs_mod.utils.clips.Clips;
 import mchorse.bbs_mod.utils.repos.RepositoryOperation;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.entity.BlockEntity;
@@ -42,6 +42,7 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import io.netty.buffer.Unpooled;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -100,20 +101,85 @@ public class ServerNetwork
 
     public static void setup()
     {
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_MODEL_BLOCK_FORM_PACKET, (server, player, handler, buf, responder) -> handleModelBlockFormPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_MODEL_BLOCK_TRANSFORMS_PACKET, (server, player, handler, buf, responder) -> handleModelBlockTransformsPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_PLAYER_FORM_PACKET, (server, player, handler, buf, responder) -> handlePlayerFormPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_MANAGER_DATA_PACKET, (server, player, handler, buf, responder) -> handleManagerDataPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTION_RECORDING, (server, player, handler, buf, responder) -> handleActionRecording(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_TOGGLE_FILM, (server, player, handler, buf, responder) -> handleToggleFilm(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_ACTION_CONTROL, (server, player, handler, buf, responder) -> handleActionControl(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_FILM_DATA_SYNC, (server, player, handler, buf, responder) -> handleSyncData(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_PLAYER_TP, (server, player, handler, buf, responder) -> handleTeleportPlayer(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_ANIMATION_STATE_TRIGGER, (server, player, handler, buf, responder) -> handleAnimationStateTriggerPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_SHARED_FORM, (server, player, handler, buf, responder) -> handleSharedFormPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_ZOOM, (server, player, handler, buf, responder) -> handleZoomPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_PAUSE_FILM, (server, player, handler, buf, responder) -> handlePauseFilmPacket(server, player, buf));
-        ServerPlayNetworking.registerGlobalReceiver(SERVER_APPLY_FILM_PLAYER_SETTINGS, (server, player, handler, buf, responder) -> handleApplyFilmPlayerSettings(server, player, buf));
+        PayloadTypeRegistry.playC2S().register(BBSServerboundPayload.ID, BBSServerboundPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(BBSClientboundPayload.ID, BBSClientboundPayload.CODEC);
+
+        /* Every channel arrives inside the one payload type, so it is unwrapped here and handed to
+         * the same handlers the mod always had. */
+        ServerPlayNetworking.registerGlobalReceiver(BBSServerboundPayload.ID, (payload, context) ->
+        {
+            MinecraftServer server = context.server();
+            ServerPlayerEntity player = context.player();
+            PacketByteBuf buf = new PacketByteBuf(Unpooled.wrappedBuffer(payload.data()));
+            Identifier channel = payload.channel();
+
+            if (channel.equals(SERVER_MODEL_BLOCK_FORM_PACKET))
+            {
+                handleModelBlockFormPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_MODEL_BLOCK_TRANSFORMS_PACKET))
+            {
+                handleModelBlockTransformsPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_PLAYER_FORM_PACKET))
+            {
+                handlePlayerFormPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_MANAGER_DATA_PACKET))
+            {
+                handleManagerDataPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_ACTION_RECORDING))
+            {
+                handleActionRecording(server, player, buf);
+            }
+            else if (channel.equals(SERVER_TOGGLE_FILM))
+            {
+                handleToggleFilm(server, player, buf);
+            }
+            else if (channel.equals(SERVER_ACTION_CONTROL))
+            {
+                handleActionControl(server, player, buf);
+            }
+            else if (channel.equals(SERVER_FILM_DATA_SYNC))
+            {
+                handleSyncData(server, player, buf);
+            }
+            else if (channel.equals(SERVER_PLAYER_TP))
+            {
+                handleTeleportPlayer(server, player, buf);
+            }
+            else if (channel.equals(SERVER_ANIMATION_STATE_TRIGGER))
+            {
+                handleAnimationStateTriggerPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_SHARED_FORM))
+            {
+                handleSharedFormPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_ZOOM))
+            {
+                handleZoomPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_PAUSE_FILM))
+            {
+                handlePauseFilmPacket(server, player, buf);
+            }
+            else if (channel.equals(SERVER_APPLY_FILM_PLAYER_SETTINGS))
+            {
+                handleApplyFilmPlayerSettings(server, player, buf);
+            }
+        });
+    }
+
+    /** Wraps a raw buffer in the mod's payload type - the one shape 1.20.5+ networking accepts. */
+    public static void send(ServerPlayerEntity player, Identifier channel, PacketByteBuf buf)
+    {
+        byte[] data = new byte[buf.readableBytes()];
+
+        buf.getBytes(buf.readerIndex(), data);
+
+        send(player, new BBSClientboundPayload(channel, data));
     }
 
     /* Handlers */
@@ -480,7 +546,7 @@ public class ServerNetwork
 
         for (ServerPlayerEntity otherPlayer : PlayerLookup.tracking(player))
         {
-            ServerPlayNetworking.send(otherPlayer, CLIENT_ANIMATION_STATE_TRIGGER, newBuf);
+            send(otherPlayer, CLIENT_ANIMATION_STATE_TRIGGER, newBuf);
         }
 
         server.execute(() ->
@@ -608,7 +674,7 @@ public class ServerNetwork
 
         buf.writeBlockPos(pos);
 
-        ServerPlayNetworking.send(player, CLIENT_CLICKED_MODEL_BLOCK_PACKET, buf);
+        send(player, CLIENT_CLICKED_MODEL_BLOCK_PACKET, buf);
     }
 
     public static void sendPlayFilm(ServerPlayerEntity player, ServerWorld world, String filmId, boolean withCamera)
@@ -665,7 +731,7 @@ public class ServerNetwork
 
         buf.writeString(filmId);
 
-        ServerPlayNetworking.send(player, CLIENT_STOP_FILM_PACKET, buf);
+        send(player, CLIENT_STOP_FILM_PACKET, buf);
     }
 
     /**
@@ -678,7 +744,7 @@ public class ServerNetwork
 
         buf.writeString(filmId);
 
-        ServerPlayNetworking.send(player, CLIENT_REQUEST_FILM_RESYNC, buf);
+        send(player, CLIENT_REQUEST_FILM_RESYNC, buf);
     }
 
     public static void sendManagerData(ServerPlayerEntity player, int callbackId, RepositoryOperation op, BaseType data)
@@ -700,14 +766,9 @@ public class ServerNetwork
         });
     }
 
-    public static void sendHandshake(MinecraftServer server, PacketSender packetSender)
-    {
-        packetSender.sendPacket(ServerNetwork.CLIENT_HANDSHAKE, createHandshakeBuf(server));
-    }
-
     public static void sendHandshake(MinecraftServer server, ServerPlayerEntity player)
     {
-        ServerPlayNetworking.send(player, ServerNetwork.CLIENT_HANDSHAKE, createHandshakeBuf(server));
+        send(player, ServerNetwork.CLIENT_HANDSHAKE, createHandshakeBuf(server));
     }
 
     private static PacketByteBuf createHandshakeBuf(MinecraftServer server)
@@ -732,7 +793,7 @@ public class ServerNetwork
 
         buf.writeBoolean(cheats);
 
-        ServerPlayNetworking.send(player, ServerNetwork.CLIENT_CHEATS_PERMISSION, buf);
+        send(player, ServerNetwork.CLIENT_CHEATS_PERMISSION, buf);
     }
 
     public static void sendSharedForm(ServerPlayerEntity player, MapType data)
@@ -762,7 +823,7 @@ public class ServerNetwork
             buf.writeInt(entry.getValue().getId());
         }
 
-        ServerPlayNetworking.send(player, CLIENT_ACTORS, buf);
+        send(player, CLIENT_ACTORS, buf);
     }
 
     public static void sendGunProperties(ServerPlayerEntity player, GunProjectileEntity projectile)
@@ -773,7 +834,7 @@ public class ServerNetwork
         buf.writeInt(projectile.getEntityId());
         properties.toNetwork(buf);
 
-        ServerPlayNetworking.send(player, CLIENT_GUN_PROPERTIES, buf);
+        send(player, CLIENT_GUN_PROPERTIES, buf);
     }
 
     public static void sendPauseFilm(ServerPlayerEntity player, String filmId)
@@ -782,7 +843,7 @@ public class ServerNetwork
 
         buf.writeString(filmId);
 
-        ServerPlayNetworking.send(player, CLIENT_PAUSE_FILM, buf);
+        send(player, CLIENT_PAUSE_FILM, buf);
     }
 
     public static void sendSelectedSlot(ServerPlayerEntity player, int slot)
@@ -793,7 +854,7 @@ public class ServerNetwork
 
         buf.writeInt(slot);
 
-        ServerPlayNetworking.send(player, CLIENT_SELECTED_SLOT, buf);
+        send(player, CLIENT_SELECTED_SLOT, buf);
     }
 
     public static void sendModelBlockState(ServerPlayerEntity player, BlockPos pos, String trigger)
@@ -803,7 +864,7 @@ public class ServerNetwork
         buf.writeBlockPos(pos);
         buf.writeString(trigger);
 
-        ServerPlayNetworking.send(player, CLIENT_ANIMATION_STATE_MODEL_BLOCK_TRIGGER, buf);
+        send(player, CLIENT_ANIMATION_STATE_MODEL_BLOCK_TRIGGER, buf);
     }
 
     public static void sendReloadModelBlocks(ServerPlayerEntity player, int tickRandom)
@@ -812,6 +873,6 @@ public class ServerNetwork
 
         buf.writeInt(tickRandom);
 
-        ServerPlayNetworking.send(player, CLIENT_REFRESH_MODEL_BLOCKS, buf);
+        send(player, CLIENT_REFRESH_MODEL_BLOCKS, buf);
     }
 }

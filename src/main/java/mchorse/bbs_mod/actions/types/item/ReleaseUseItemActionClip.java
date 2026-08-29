@@ -100,9 +100,10 @@ public class ReleaseUseItemActionClip extends ItemActionClip
     private void applyRiptide(LivingEntity actor, SuperFakePlayer player, ItemStack stack)
     {
         int level = EnchantmentUtils.getLevel(player.getWorld(), Enchantments.RIPTIDE, stack);
+        /* Since 1.21 the sound constants are registry references, not the events themselves. */
         SoundEvent sound = level >= 3
-            ? SoundEvents.ITEM_TRIDENT_RIPTIDE_3
-            : (level == 2 ? SoundEvents.ITEM_TRIDENT_RIPTIDE_2 : SoundEvents.ITEM_TRIDENT_RIPTIDE_1);
+            ? SoundEvents.ITEM_TRIDENT_RIPTIDE_3.value()
+            : (level == 2 ? SoundEvents.ITEM_TRIDENT_RIPTIDE_2.value() : SoundEvents.ITEM_TRIDENT_RIPTIDE_1.value());
 
         /* The spin is tracked data, so this is what makes every client show
          * the body whirling - the animator poses it from the same flag.

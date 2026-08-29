@@ -11,6 +11,7 @@ import net.minecraft.scoreboard.Team;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.network.packet.c2s.common.SyncedClientOptions;
 import net.minecraft.stat.Stat;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +92,7 @@ public class SuperFakePlayer extends ServerPlayerEntity
 
     protected SuperFakePlayer(ServerWorld world, GameProfile profile)
     {
-        super(world.getServer(), world, profile);
+        super(world.getServer(), world, profile, SyncedClientOptions.createDefault());
 
         this.networkHandler = new SuperFakePlayerNetworkHandler(this);
     }
