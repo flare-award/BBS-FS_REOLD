@@ -72,8 +72,10 @@ public class BBSShaders
             pickerParticles = load(factory, "picker_particles", VertexFormats.POSITION_COLOR_TEXTURE_LIGHT);
             pickerModels = load(factory, "picker_models", VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
         }
-        catch (IOException e)
+        catch (Exception e)
         {
+            /* Nothing in the block above throws IOException any more - load() handles each
+             * program itself - so this is only a net for the resource factory wrapper. */
             LOGGER.error("BBS could not set up its resource factory for the core shaders", e);
         }
 
