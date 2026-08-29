@@ -1,5 +1,7 @@
 package mchorse.bbs_mod.ui.particles;
 
+import mchorse.bbs_mod.utils.MatrixStackUtils;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.graphics.Draw;
 import mchorse.bbs_mod.particles.ParticleScheme;
@@ -112,7 +114,7 @@ public class UIParticleSchemeRenderer extends UIModelRenderer
 
         stack.push();
         stack.loadIdentity();
-        stack.multiplyPositionMatrix(new Matrix4f(RenderSystem.getInverseViewRotationMatrix()).invert());
+        stack.multiplyPositionMatrix(new Matrix4f(MatrixStackUtils.getInverseViewRotationMatrix()).invert());
 
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();

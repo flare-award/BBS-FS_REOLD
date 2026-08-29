@@ -135,9 +135,9 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
         GL30.glCullFace(GL30.GL_FRONT);
         RenderSystem.setShaderLights(new Vector3f(0F, 0F, 1F), new Vector3f(0F, 0F, 1F));
         RenderSystem.setProjectionMatrix(new Matrix4f().setOrtho(-1F, 1F, 1F, -1F, -500F, 500F), VertexSorter.BY_Z);
-        RenderSystem.getModelViewStack().push();
-        RenderSystem.getModelViewStack().peek().getPositionMatrix().identity();
-        RenderSystem.getModelViewStack().peek().getNormalMatrix().identity();
+        /* The JOML stack has no separate normal matrix, so identity() covers both. */
+        RenderSystem.getModelViewStack().pushMatrix();
+        RenderSystem.getModelViewStack().identity();
 
         framebuffer.apply();
 
@@ -190,7 +190,7 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
         GL30.glViewport(0, 0, width, height);
 
         RenderSystem.setShaderLights(light0, light1);
-        RenderSystem.getModelViewStack().pop();
+        RenderSystem.getModelViewStack().popMatrix();
         RenderSystem.setProjectionMatrix(projectionMatrix, VertexSorter.BY_Z);
         GL30.glCullFace(GL30.GL_BACK);
 
@@ -316,7 +316,7 @@ public class FramebufferFormRenderer extends FormRenderer<FramebufferForm>
 
         /* normal(Matrix3f, fff) is gone since 1.21 - rotate the normal here, which is all that
          * overload ever did. */
-        Vector3f n = new Vector3f(0F, 0F, nz).rotate(normal);
+        Vector3f n = normal.transform(new Vector3f(0F, 0F, nz));
 
         return consumer.vertex(matrix, x, y, 0F).color(color.r, color.g, color.b, color.a).texture(u, v).overlay(overlay).light(light).normal(n.x, n.y, n.z);
     }

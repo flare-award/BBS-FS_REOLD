@@ -314,7 +314,7 @@ public class BillboardFormRenderer extends FormRenderer<BillboardForm>
 
         /* normal(Matrix3f, fff) is gone since 1.21 - rotate the normal here, which is all that
          * overload ever did. */
-        Vector3f n = new Vector3f(0F, 0F, nz).rotate(normal);
+        Vector3f n = normal.transform(new Vector3f(0F, 0F, nz));
 
         return consumer.vertex(matrix, x, y, 0F).color(color.r, color.g, color.b, color.a).texture(u, v).overlay(overlay).light(light).normal(n.x, n.y, n.z);
     }

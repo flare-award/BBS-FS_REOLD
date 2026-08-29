@@ -1,5 +1,7 @@
 package mchorse.bbs_mod.forms.renderers;
 
+import mchorse.bbs_mod.utils.MatrixStackUtils;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import mchorse.bbs_mod.BBSModClient;
 import mchorse.bbs_mod.BBSSettings;
@@ -100,7 +102,7 @@ public class TrailFormRenderer extends FormRenderer<TrailForm> implements ITicka
         }
 
         MatrixStack stack = context.stack;
-        Matrix4f camInverse = new Matrix4f(RenderSystem.getInverseViewRotationMatrix());
+        Matrix4f camInverse = new Matrix4f(MatrixStackUtils.getInverseViewRotationMatrix());
 
         Camera camera = context.camera;
         double baseX = camera.position.x;

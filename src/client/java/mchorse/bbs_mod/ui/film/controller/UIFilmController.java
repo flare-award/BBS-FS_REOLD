@@ -1396,7 +1396,8 @@ public class UIFilmController extends UIElement implements GizmoViewport
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.panel.lastProjection, VertexSorter.BY_Z);
-        RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.panel.lastView).invert());
+        /* 1.21 removed the global this used to write; the camera is now the only source of the
+         * view rotation, so there is nothing to install here. */
 
         /* Render the stencil */
         MatrixStack worldStack = this.worldRenderContext.matrixStack();

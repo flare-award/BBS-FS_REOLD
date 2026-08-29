@@ -4,9 +4,12 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import mchorse.bbs_mod.utils.pose.Transform;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
+import org.joml.Quaternionf;
 
 public class MatrixStackUtils
 {
@@ -14,7 +17,6 @@ public class MatrixStackUtils
 
     private static Matrix4f oldProjection = new Matrix4f();
     private static Matrix4f oldMV = new Matrix4f();
-    private static Matrix3f oldInverse = new Matrix3f();
 
     public static void scaleStack(MatrixStack stack, float x, float y, float z)
     {
@@ -27,29 +29,41 @@ public class MatrixStackUtils
         /* Cache the global stuff */
         oldProjection.set(RenderSystem.getProjectionMatrix());
         oldMV.set(RenderSystem.getModelViewMatrix());
-        oldInverse.set(RenderSystem.getInverseViewRotationMatrix());
 
-        MatrixStack renderStack = RenderSystem.getModelViewStack();
+        /* The modelview stack is a plain JOML Matrix4fStack since 1.21, and it carries no normal
+         * matrix - the shader gets that one separately. */
+        Matrix4fStack renderStack = RenderSystem.getModelViewStack();
 
-        renderStack.push();
-        renderStack.loadIdentity();
+        renderStack.pushMatrix();
+        renderStack.identity();
         RenderSystem.applyModelViewMatrix();
-        renderStack.pop();
+        renderStack.popMatrix();
     }
 
     public static void restoreMatrices()
     {
         /* Return back to orthographic projection */
         RenderSystem.setProjectionMatrix(oldProjection, VertexSorter.BY_Z);
-        RenderSystem.setInverseViewRotationMatrix(oldInverse);
 
-        MatrixStack renderStack = RenderSystem.getModelViewStack();
+        Matrix4fStack renderStack = RenderSystem.getModelViewStack();
 
-        renderStack.push();
-        renderStack.loadIdentity();
-        MatrixStackUtils.multiply(renderStack, oldMV);
+        renderStack.pushMatrix();
+        renderStack.identity();
+        renderStack.mul(oldMV);
         RenderSystem.applyModelViewMatrix();
-        renderStack.pop();
+        renderStack.popMatrix();
+    }
+
+    /**
+     * 1.21 removed {@code RenderSystem}'s inverse view rotation matrix outright - there is no
+     * global for shaders to read any more. It was the inverse of the camera rotation, which the
+     * camera still hands out, so it is rebuilt from that.
+     */
+    public static Matrix3f getInverseViewRotationMatrix()
+    {
+        Quaternionf rotation = MinecraftClient.getInstance().gameRenderer.getCamera().getRotation();
+
+        return new Matrix3f().rotation(rotation.conjugate(new Quaternionf()));
     }
 
     public static void applyTransform(MatrixStack stack, Transform transform)

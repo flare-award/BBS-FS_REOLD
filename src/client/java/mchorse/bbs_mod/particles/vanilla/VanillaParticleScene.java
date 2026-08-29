@@ -240,13 +240,13 @@ public class VanillaParticleScene
      */
     private static void applyModelView(Matrix4f matrix)
     {
-        MatrixStack modelView = RenderSystem.getModelViewStack();
+        Matrix4fStack modelView = RenderSystem.getModelViewStack();
 
-        modelView.push();
-        modelView.loadIdentity();
-        modelView.multiplyPositionMatrix(matrix);
+        modelView.pushMatrix();
+        modelView.identity();
+        modelView.mul(matrix);
         RenderSystem.applyModelViewMatrix();
-        modelView.pop();
+        modelView.popMatrix();
     }
 
     private void renderSheets(float transition)

@@ -12,13 +12,18 @@ import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.model.BakedModelManager;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.DyedColorComponent;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.entry.RegistryEntry;
+
+import java.util.Optional;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ArmorItem;
 import net.minecraft.item.ArmorMaterial;
-import net.minecraft.item.DyeableArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -76,9 +81,10 @@ public class ArmorRenderer
                 part.pitch = part.yaw = part.roll = 0F;
                 part.xScale = part.yScale = part.zScale = 1F;
 
-                if (armorItem instanceof DyeableArmorItem dyeableArmorItem)
+                /* DyeableArmorItem is gone; the dye lives in the dyed_color component now. */
+                if (itemStack.contains(DataComponentTypes.DYED_COLOR))
                 {
-                    int color = dyeableArmorItem.getColor(itemStack);
+                    int color = DyedColorComponent.getColor(itemStack, DyedColorComponent.DEFAULT_COLOR);
                     float r = (float)(color >> 16 & 255) / 255.0F;
                     float g = (float)(color >> 8 & 255) / 255.0F;
                     float b = (float)(color & 255) / 255.0F;
@@ -91,7 +97,7 @@ public class ArmorRenderer
                     this.renderArmorParts(part, matrices, vertexConsumers, light, armorItem, innerModel, 1F, 1F, 1F, null);
                 }
 
-                ArmorTrim.getTrim(entity.getWorld().getRegistryManager(), itemStack).ifPresent((trim) ->
+                Optional.ofNullable(itemStack.<ArmorTrim>get(DataComponentTypes.TRIM)).ifPresent((trim) ->
                 {
                     this.renderTrim(part, armorItem.getMaterial(), matrices, vertexConsumers, light, trim, innerModel);
                 });
@@ -195,7 +201,7 @@ public class ArmorRenderer
             ColorHelper.Argb.getArgb(255, Math.round(red * 255F), Math.round(green * 255F), Math.round(blue * 255F)));
     }
 
-    private void renderTrim(ModelPart part, ArmorMaterial material, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ArmorTrim trim, boolean leggings)
+    private void renderTrim(ModelPart part, RegistryEntry<ArmorMaterial> material, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, ArmorTrim trim, boolean leggings)
     {
         Sprite sprite = this.armorTrimsAtlas.getSprite(leggings ? trim.getLeggingsModelId(material) : trim.getGenericModelId(material));
         VertexConsumer vertexConsumer = sprite.getTextureSpecificVertexConsumer(vertexConsumers.getBuffer(TexturedRenderLayers.getArmorTrims(false)));
@@ -220,9 +226,10 @@ public class ArmorRenderer
 
     private Identifier getArmorTexture(ArmorItem item, boolean secondLayer, String overlay)
     {
-        String materialName = item.getMaterial().getName();
+        /* getMaterial() is a registry entry since 1.21, so the name comes out of the registry. */
+        String materialName = Registries.ARMOR_MATERIAL.getId(item.getMaterial().value()).getPath();
         String id = "textures/models/armor/" + materialName + "_layer_" + (secondLayer ? 2 : 1) + (overlay == null ? "" : "_" + overlay) + ".png";
 
-        return ARMOR_TEXTURE_CACHE.computeIfAbsent(id, Identifier::new);
+        return ARMOR_TEXTURE_CACHE.computeIfAbsent(id, Identifier::of);
     }
 }

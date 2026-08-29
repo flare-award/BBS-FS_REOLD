@@ -36,6 +36,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
@@ -1128,11 +1129,11 @@ public class FilmEffects
 
         Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
         VertexSorter previousSorter = RenderSystem.getVertexSorting();
-        MatrixStack modelViewStack = RenderSystem.getModelViewStack();
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
 
         RenderSystem.setProjectionMatrix(new Matrix4f(), VertexSorter.BY_Z);
-        modelViewStack.push();
-        modelViewStack.loadIdentity();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -1197,13 +1198,13 @@ public class FilmEffects
 
         Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
         VertexSorter previousSorter = RenderSystem.getVertexSorting();
-        MatrixStack modelViewStack = RenderSystem.getModelViewStack();
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         Matrix4f identity = new Matrix4f();
         BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
 
         RenderSystem.setProjectionMatrix(identity, VertexSorter.BY_Z);
-        modelViewStack.push();
-        modelViewStack.loadIdentity();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
         RenderSystem.colorMask(false, false, false, false);
         RenderSystem.enableDepthTest();

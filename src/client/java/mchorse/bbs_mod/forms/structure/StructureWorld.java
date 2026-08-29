@@ -15,7 +15,7 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.item.map.MapId;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.recipe.BrewingRecipeRegistry;import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -208,6 +208,12 @@ public class StructureWorld extends World
 
     /* 1.21 keys map state by MapId instead of a string, and dropped getNextMapId entirely. */
     @Override
+    public MapIdComponent increaseAndGetMapId()
+    {
+        return new MapIdComponent(0);
+    }
+
+    @Override
     public BrewingRecipeRegistry getBrewingRecipeRegistry()
     {
         return BrewingRecipeRegistry.create(this.getEnabledFeatures());
@@ -215,13 +221,13 @@ public class StructureWorld extends World
 
     @Nullable
     @Override
-    public MapState getMapState(MapId id)
+    public MapState getMapState(MapIdComponent id)
     {
         return null;
     }
 
     @Override
-    public void putMapState(MapId id, MapState state)
+    public void putMapState(MapIdComponent id, MapState state)
     {
     }
 
