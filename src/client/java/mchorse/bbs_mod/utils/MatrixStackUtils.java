@@ -38,10 +38,13 @@ public class MatrixStackUtils
          * matrix - the shader gets that one separately. */
         Matrix4fStack renderStack = RenderSystem.getModelViewStack();
 
+        /* Pushed and left on the stack, exactly as the original 1.21.1 port does: the identity
+         * modelview has to stay installed for the whole UI 3D pass and is popped by
+         * restoreMatrices(). Popping it here made the next applyModelViewMatrix() read the
+         * pre-UI matrix back. */
         renderStack.pushMatrix();
         renderStack.identity();
         RenderSystem.applyModelViewMatrix();
-        renderStack.popMatrix();
     }
 
     public static void restoreMatrices()
@@ -52,11 +55,8 @@ public class MatrixStackUtils
 
         Matrix4fStack renderStack = RenderSystem.getModelViewStack();
 
-        renderStack.pushMatrix();
-        renderStack.identity();
-        renderStack.mul(oldMV);
-        RenderSystem.applyModelViewMatrix();
         renderStack.popMatrix();
+        RenderSystem.applyModelViewMatrix();
     }
 
     /**
