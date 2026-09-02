@@ -90,11 +90,23 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
     @Override
     public VertexConsumer getBuffer(RenderLayer renderLayer)
     {
-        BufferBuilder buffer = this.builders.computeIfAbsent(renderLayer, layer -> new BufferBuilder(
-            this.layerAllocators.getOrDefault(layer, this.fallbackAllocator),
-            layer.getDrawMode(),
-            layer.getVertexFormat()
-        ));
+        /* A 1.21.1 BufferBuilder has no begin()/reset() - only its constructor puts it into the
+         * building state, and end()/endNullable() close it for good. This provider keeps one
+         * builder per layer across draws, so a builder that a previous pass already ended must be
+         * replaced here; handing the dead one out is what threw "Not building!" from
+         * VertexConsumer.vertex() as soon as the morphing list reached a projectile model. */
+        BufferBuilder buffer = this.builders.get(renderLayer);
+
+        if (buffer == null || !buffer.building)
+        {
+            buffer = new BufferBuilder(
+                this.layerAllocators.getOrDefault(renderLayer, this.fallbackAllocator),
+                renderLayer.getDrawMode(),
+                renderLayer.getVertexFormat()
+            );
+
+            this.builders.put(renderLayer, buffer);
+        }
 
         if (this.substitute != null)
         {
