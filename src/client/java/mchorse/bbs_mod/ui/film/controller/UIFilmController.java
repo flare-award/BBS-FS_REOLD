@@ -1398,7 +1398,9 @@ public class UIFilmController extends UIElement implements GizmoViewport
 
         RenderSystem.setProjectionMatrix(this.panel.lastProjection, VertexSorter.BY_Z);
         /* Match the original 1.21.1 port: feed the film camera into the view rotation holder */
-        InverseView.set(new Matrix3f(BBSRendering.camera).invert());
+        /* The film panel keeps its own view matrix (the same one multiply() below uses); the
+         * original port reads a global world camera here, this fork does not have that global. */
+        InverseView.set(new Matrix3f(this.panel.lastView).invert());
         /* 1.21 removed the global this used to write; the camera is now the only source of the
          * view rotation, so there is nothing to install here. */
 
