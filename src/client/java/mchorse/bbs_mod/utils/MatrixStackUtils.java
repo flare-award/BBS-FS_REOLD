@@ -2,6 +2,7 @@ package mchorse.bbs_mod.utils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.systems.VertexSorter;
+import mchorse.bbs_mod.graphics.InverseView;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import mchorse.bbs_mod.utils.pose.Transform;
 import net.minecraft.client.MinecraftClient;
@@ -17,6 +18,7 @@ public class MatrixStackUtils
 
     private static Matrix4f oldProjection = new Matrix4f();
     private static Matrix4f oldMV = new Matrix4f();
+    private static Matrix3f oldInverse = new Matrix3f();
 
     public static void scaleStack(MatrixStack stack, float x, float y, float z)
     {
@@ -29,6 +31,8 @@ public class MatrixStackUtils
         /* Cache the global stuff */
         oldProjection.set(RenderSystem.getProjectionMatrix());
         oldMV.set(RenderSystem.getModelViewMatrix());
+        /* Keep the view rotation holder across the ortho section, as the original 1.21.1 port does */
+        oldInverse.set(InverseView.get());
 
         /* The modelview stack is a plain JOML Matrix4fStack since 1.21, and it carries no normal
          * matrix - the shader gets that one separately. */
@@ -44,6 +48,7 @@ public class MatrixStackUtils
     {
         /* Return back to orthographic projection */
         RenderSystem.setProjectionMatrix(oldProjection, VertexSorter.BY_Z);
+        InverseView.set(oldInverse);
 
         Matrix4fStack renderStack = RenderSystem.getModelViewStack();
 

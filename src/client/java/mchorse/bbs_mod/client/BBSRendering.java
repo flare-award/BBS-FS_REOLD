@@ -11,6 +11,7 @@ import mchorse.bbs_mod.camera.controller.CameraWorkCameraController;
 import mchorse.bbs_mod.camera.controller.PlayCameraController;
 import mchorse.bbs_mod.events.ModelBlockEntityUpdateCallback;
 import mchorse.bbs_mod.forms.renderers.utils.RecolorVertexConsumer;
+import mchorse.bbs_mod.graphics.InverseView;
 import mchorse.bbs_mod.graphics.texture.Texture;
 import mchorse.bbs_mod.graphics.texture.TextureFormat;
 import mchorse.bbs_mod.ui.UIKeys;
@@ -39,6 +40,7 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.util.Window;
 import net.minecraft.client.util.math.MatrixStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -578,6 +580,11 @@ public class BBSRendering
         {
             FilmEffects.renderPhotosInWorld(worldRenderContext, false);
         }
+
+        /* Feed the world camera orientation into the holder that replaced RenderSystem's view
+         * rotation matrix (removed in 1.21.1). The original 1.21.1 port sets it here for the world
+         * pass, so billboards, particles and the model shader all get a valid ViewRotationMat. */
+        InverseView.set(new Matrix3f().rotation(worldRenderContext.camera().getRotation()));
 
         if (MinecraftClient.getInstance().currentScreen instanceof UIScreen screen)
         {

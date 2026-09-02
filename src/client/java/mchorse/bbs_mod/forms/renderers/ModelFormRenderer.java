@@ -344,7 +344,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
          * the inside of the mesh, so the texture reads as torn apart. World and the editor camera
          * are not mirrored, which is why only the UI preview was broken. Disabling cull for the
          * mirrored pass restores the front faces. */
-        if (ui || !model.isCulling())
+        if (!model.isCulling())
         {
             RenderSystem.disableCull();
         }
@@ -361,10 +361,11 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         MatrixStackUtils.multiply(newStack, stack.peek().getPositionMatrix());
         newStack.peek().getNormalMatrix().set(stack.peek().getNormalMatrix());
 
-        /* No ui-only normal correction. This block was the single difference between the UI and
-         * the world render of the same model, and the world one is correct: multiply() already
-         * folds the negative-Y of getUIMatrix into the normal matrix, so re-applying the negation
-         * here flipped the normals against the mirrored winding and facetted the preview. */
+        if (ui)
+        {
+            newStack.peek().getNormalMatrix().getScale(Vectors.EMPTY_3F);
+            newStack.peek().getNormalMatrix().scale(1F / Vectors.EMPTY_3F.x, -1F / Vectors.EMPTY_3F.y, 1F / Vectors.EMPTY_3F.z);
+        }
 
         /* Strictly the world frame: it's what places the model in the world for the simulating subsystems
          * (bone physics resolves gravity, wind and its collisions against it), so falling back to the render
@@ -448,7 +449,7 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         gameRenderer.getOverlayTexture().teardownOverlayColor();
         RenderSystem.disableBlend();
 
-        if (ui || !model.isCulling())
+        if (!model.isCulling())
         {
             RenderSystem.enableCull();
         }

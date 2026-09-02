@@ -1,5 +1,6 @@
 package mchorse.bbs_mod.cubic.render.vao;
 
+import mchorse.bbs_mod.graphics.InverseView;
 import mchorse.bbs_mod.utils.MatrixStackUtils;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -86,6 +87,17 @@ public class ModelVAORenderer
         if (normalUniform != null)
         {
             normalUniform.set(normalMat);
+        }
+
+        /* 1.21 removed RenderSystem's inverse view rotation global. The original 1.21.1 port keeps it
+         * in InverseView (fed by the world pass, the film and the UI previews) and pushes it into the
+         * shader here; without it the model program transforms vertices against a stale/identity
+         * view rotation, which is what tore the texture apart in the UI form preview. */
+        GlUniform viewRotationUniform = shader.getUniform("ViewRotationMat");
+
+        if (viewRotationUniform != null)
+        {
+            viewRotationUniform.set(InverseView.get());
         }
 
         if (shader.fogStart != null)

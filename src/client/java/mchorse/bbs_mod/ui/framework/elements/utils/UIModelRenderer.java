@@ -35,6 +35,7 @@ import org.lwjgl.opengl.GL11;
  * This base class can be used for full screen model viewer.
  */
 import mchorse.bbs_mod.graphics.Draw;
+import mchorse.bbs_mod.graphics.InverseView;
 
 public abstract class UIModelRenderer extends UIElement
 {
@@ -256,7 +257,10 @@ public abstract class UIModelRenderer extends UIElement
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.camera.projection, VertexSorter.BY_Z);
-        /* TODO 1.21 removed RenderSystem's view rotation matrix - see MatrixStackUtils. */
+        /* 1.21 removed RenderSystem's view rotation matrix; the original 1.21.1 port keeps its
+         * inverse in InverseView and feeds it from the preview camera, so the model shader gets the
+         * right ViewRotationMat for this UI render. */
+        InverseView.set(new Matrix3f(this.camera.view).invert());
 
         /* Rendering begins... */
         stack.push();
