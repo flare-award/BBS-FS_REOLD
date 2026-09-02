@@ -27,6 +27,7 @@ import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
 import mchorse.bbs_mod.client.BBSRendering;
+import mchorse.bbs_mod.graphics.InverseView;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.film.BaseFilmController;
@@ -1396,6 +1397,8 @@ public class UIFilmController extends UIElement implements GizmoViewport
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.panel.lastProjection, VertexSorter.BY_Z);
+        /* Match the original 1.21.1 port: feed the film camera into the view rotation holder */
+        InverseView.set(new Matrix3f(BBSRendering.camera).invert());
         /* 1.21 removed the global this used to write; the camera is now the only source of the
          * view rotation, so there is nothing to install here. */
 
