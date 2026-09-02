@@ -438,13 +438,18 @@ public class MobFormRenderer extends FormRenderer<MobForm> implements ITickable
             this.entity.setSneaking(entity.isSneaking());
             this.entity.setSprinting(entity.isSprinting());
             this.entity.setPose(entity.isSneaking() ? EntityPose.CROUCHING : EntityPose.STANDING);
-            /* equipStack is LivingEntity's, and the stand-in is only typed as an Entity */
             if (this.entity instanceof LivingEntity living)
             {
-                for (EquipmentSlot slot : EquipmentSlot.values())
-                {
-                    living.equipStack(slot, entity.getEquipmentStack(slot));
-                }
+                /* Enumerate the slots explicitly, as the original 1.21.1 port does: since 1.21
+                 * EquipmentSlot.values() also contains BODY, which most living entities do not
+                 * accept - handing it to equipStack() is what crashed the morphing list when it
+                 * reached the vanilla mob models. */
+                living.equipStack(EquipmentSlot.MAINHAND, entity.getEquipmentStack(EquipmentSlot.MAINHAND));
+                living.equipStack(EquipmentSlot.OFFHAND, entity.getEquipmentStack(EquipmentSlot.OFFHAND));
+                living.equipStack(EquipmentSlot.HEAD, entity.getEquipmentStack(EquipmentSlot.HEAD));
+                living.equipStack(EquipmentSlot.CHEST, entity.getEquipmentStack(EquipmentSlot.CHEST));
+                living.equipStack(EquipmentSlot.LEGS, entity.getEquipmentStack(EquipmentSlot.LEGS));
+                living.equipStack(EquipmentSlot.FEET, entity.getEquipmentStack(EquipmentSlot.FEET));
             }
             this.entity.age = entity.getAge();
             this.entity.noClip = true;
