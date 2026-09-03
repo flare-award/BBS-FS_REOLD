@@ -1148,13 +1148,14 @@ public class FilmEffects
                 modelBlocksReplayed = true;
             }
 
-            /* With shaders every form draws immediately, so the fence can go down
-             * right here - it also blocks the entities Iris renders later. Without
-             * shaders the deferred translucent form parts still have to land on
-             * top, so the stamp waits for the translucent layer hook. */
+            /* With shaders every form draws immediately, so the mask can be frozen
+             * right here - everything Iris renders later keeps its own alpha and
+             * therefore stays behind the photo. Without shaders the deferred
+             * translucent form parts still have to land on top, so the freeze waits
+             * for the translucent layer hook. */
             if (stampPending && BBSRendering.isIrisShadersEnabled())
             {
-                stampPhotoDepth();
+                freezePhotoMask();
             }
         }
     }
