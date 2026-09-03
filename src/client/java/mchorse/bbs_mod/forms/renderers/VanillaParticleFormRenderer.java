@@ -1,5 +1,7 @@
 package mchorse.bbs_mod.forms.renderers;
 
+import mchorse.bbs_mod.utils.MatrixStackUtils;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.brigadier.StringReader;
 import mchorse.bbs_mod.forms.ITickable;
@@ -14,6 +16,7 @@ import mchorse.bbs_mod.utils.MathUtils;
 import mchorse.bbs_mod.utils.joml.Matrices;
 import mchorse.bbs_mod.utils.joml.Vectors;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.argument.ParticleEffectArgumentType;
 import net.minecraft.client.render.Camera;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleType;
@@ -89,7 +92,7 @@ public class VanillaParticleFormRenderer extends FormRenderer<VanillaParticleFor
     {
         super.render3D(context);
 
-        Matrix4f matrix = new Matrix4f(RenderSystem.getInverseViewRotationMatrix());
+        Matrix4f matrix = new Matrix4f(MatrixStackUtils.getInverseViewRotationMatrix());
 
         matrix.mul(context.stack.peek().getPositionMatrix());
 
@@ -312,7 +315,10 @@ public class VanillaParticleFormRenderer extends FormRenderer<VanillaParticleFor
         {
             if (type != null)
             {
-                return type.getParametersFactory().read(type, new StringReader(" " + settings.arguments));
+                /* The per-type ParametersReader is gone since 1.21; the brigadier argument reader
+                 * parses the very same "id + arguments" string and knows about the registries. */
+                return ParticleEffectArgumentType.readParameters(new StringReader(" " + settings.arguments),
+                    MinecraftClient.getInstance().world.getRegistryManager());
             }
         }
         catch (Exception e)

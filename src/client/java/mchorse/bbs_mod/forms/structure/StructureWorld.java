@@ -15,6 +15,9 @@ import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.world.tick.TickManager;
+import net.minecraft.recipe.BrewingRecipeRegistry;import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
@@ -48,6 +51,7 @@ import java.util.Map;
 public class StructureWorld extends World
 {
     private final ClientWorld delegate;
+    private final TickManager tickManager = new TickManager();
     private final StructureRenderData data;
     private final Map<BlockPos, BlockEntity> blockEntities;
 
@@ -204,22 +208,35 @@ public class StructureWorld extends World
         return null;
     }
 
+    /* 1.21 keys map state by MapId instead of a string, and dropped getNextMapId entirely. */
+    @Override
+    public TickManager getTickManager()
+    {
+        return this.tickManager;
+    }
+
+    @Override
+    public MapIdComponent increaseAndGetMapId()
+    {
+        return new MapIdComponent(0);
+    }
+
+    @Override
+    public BrewingRecipeRegistry getBrewingRecipeRegistry()
+    {
+        return BrewingRecipeRegistry.create(this.getEnabledFeatures());
+    }
+
     @Nullable
     @Override
-    public MapState getMapState(String id)
+    public MapState getMapState(MapIdComponent id)
     {
         return null;
     }
 
     @Override
-    public void putMapState(String id, MapState state)
+    public void putMapState(MapIdComponent id, MapState state)
     {
-    }
-
-    @Override
-    public int getNextMapId()
-    {
-        return 0;
     }
 
     @Override
@@ -248,7 +265,7 @@ public class StructureWorld extends World
     }
 
     @Override
-    public void emitGameEvent(GameEvent event, Vec3d emitterPos, GameEvent.Emitter emitter)
+    public void emitGameEvent(RegistryEntry<GameEvent> event, Vec3d emitterPos, GameEvent.Emitter emitter)
     {
     }
 

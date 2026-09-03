@@ -53,7 +53,7 @@ public class ItemPredicateDonor
         }
 
         donor.activeItemStack = stack;
-        donor.itemUseTimeLeft = Math.max(0, Math.round(stack.getMaxUseTime() - use.elapsed()));
+        donor.itemUseTimeLeft = Math.max(0, Math.round(stack.getMaxUseTime(donor) - use.elapsed()));
 
         return donor;
     }

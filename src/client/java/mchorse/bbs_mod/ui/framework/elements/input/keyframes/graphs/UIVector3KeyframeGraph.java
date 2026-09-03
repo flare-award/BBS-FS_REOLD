@@ -28,6 +28,8 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIVector3KeyframeGraph extends UIKeyframeGraph
 {
     private static final int[] AXIS_COLORS = {Colors.RED, Colors.GREEN, Colors.BLUE};
@@ -102,10 +104,9 @@ public class UIVector3KeyframeGraph extends UIKeyframeGraph
         }
 
         /* Render track bars (horizontal lines) */
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         Matrix4f matrix = context.batcher.getContext().getMatrices().peek().getPositionMatrix();
         
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (int axis = 0; axis < 3; axis++)
         {
@@ -114,18 +115,17 @@ public class UIVector3KeyframeGraph extends UIKeyframeGraph
         
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     @Override
     public void renderTopmostKeyframes(UIContext context)
     {
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         Matrix4f matrix = context.batcher.getContext().getMatrices().peek().getPositionMatrix();
         Area area = this.keyframes.graphArea;
 
         context.batcher.clip(area, context);
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (int axis = 0; axis < 3; axis++)
         {
@@ -134,7 +134,7 @@ public class UIVector3KeyframeGraph extends UIKeyframeGraph
 
         RenderSystem.enableBlend();
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
         context.batcher.unclip(context);
     }
 

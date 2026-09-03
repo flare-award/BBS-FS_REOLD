@@ -98,7 +98,7 @@ public class DamageControl
          * the capture get a copy of their own. */
         BlockPos key = new BlockPos(pos);
 
-        this.blocks.put(key, new BlockCapture(key, state, entity == null ? null : entity.createNbtWithId()));
+        this.blocks.put(key, new BlockCapture(key, state, entity == null ? null : entity.createNbtWithId(entity.getWorld().getRegistryManager())));
     }
 
     public void addEntity(Entity entity)
@@ -161,7 +161,7 @@ public class DamageControl
 
             if (block.blockEntity != null)
             {
-                BlockEntity blockEntity = BlockEntity.createFromNbt(block.pos, block.lastState, block.blockEntity);
+                BlockEntity blockEntity = BlockEntity.createFromNbt(block.pos, block.lastState, block.blockEntity, this.world.getRegistryManager());
 
                 /* Null when the block entity's type is gone - a mod removed since the take was
                  * captured. The block itself is already back, which is the most that can be

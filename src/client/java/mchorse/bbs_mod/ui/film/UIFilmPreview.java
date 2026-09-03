@@ -57,6 +57,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.joml.Matrix4fStack;
+
 public class UIFilmPreview extends UIElement
 {
     private List<AudioClip> clips = new ArrayList<>();
@@ -518,19 +520,21 @@ public class UIFilmPreview extends UIElement
     private void renderCursor(UIContext context)
     {
         net.minecraft.client.render.Camera /* NECESSARY */ mcCamera = MinecraftClient.getInstance().gameRenderer.getCamera();
-        MatrixStack stack = RenderSystem.getModelViewStack();
+        /* The global modelview stack is JOML's Matrix4fStack since 1.21, so the transforms go
+         * straight onto the matrix instead of through a MatrixStack entry. */
+        Matrix4fStack stack = RenderSystem.getModelViewStack();
 
-        stack.push();
+        stack.pushMatrix();
 
-        stack.multiplyPositionMatrix(context.batcher.getContext().getMatrices().peek().getPositionMatrix());
+        stack.mul(context.batcher.getContext().getMatrices().peek().getPositionMatrix());
         stack.translate(area.x + 16, area.ey() - 12, 0F);
-        stack.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(mcCamera.getPitch()));
-        stack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(mcCamera.getYaw()));
+        stack.rotate(RotationAxis.NEGATIVE_X.rotationDegrees(mcCamera.getPitch()));
+        stack.rotate(RotationAxis.POSITIVE_Y.rotationDegrees(mcCamera.getYaw()));
         stack.scale(-1F, -1F, -1F);
         RenderSystem.applyModelViewMatrix();
         RenderSystem.renderCrosshair(10);
 
-        stack.pop();
+        stack.popMatrix();
         RenderSystem.applyModelViewMatrix();
     }
 }

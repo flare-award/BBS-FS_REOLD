@@ -23,6 +23,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.particle.ParticleEffect;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ import java.util.List;
  * {@code ParticleMixin} while {@link #render} runs, matching the rest of the
  * preview.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class VanillaParticleScene
 {
     /**
@@ -240,19 +243,20 @@ public class VanillaParticleScene
      */
     private static void applyModelView(Matrix4f matrix)
     {
-        MatrixStack modelView = RenderSystem.getModelViewStack();
+        Matrix4fStack modelView = RenderSystem.getModelViewStack();
 
-        modelView.push();
-        modelView.loadIdentity();
-        modelView.multiplyPositionMatrix(matrix);
+        modelView.pushMatrix();
+        modelView.identity();
+        modelView.mul(matrix);
         RenderSystem.applyModelViewMatrix();
-        modelView.pop();
+        modelView.popMatrix();
     }
 
     private void renderSheets(float transition)
     {
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder builder = tessellator.getBuffer();
+        /* Since 1.21 a builder only exists once it is begun, so it is made per sheet below. */
+        BufferBuilder builder = null;
 
         /* A billboard is a flat quad spun to face the camera, so which way its
          * vertices wind depends on where that camera is. Vanilla gets away with
@@ -286,7 +290,7 @@ public class VanillaParticleScene
             RenderSystem.defaultBlendFunc();
             RenderSystem.depthMask(true);
 
-            builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
+            builder = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR_LIGHT);
 
             for (Particle particle : this.particles)
             {
@@ -305,7 +309,7 @@ public class VanillaParticleScene
                 }
             }
 
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         if (culling)

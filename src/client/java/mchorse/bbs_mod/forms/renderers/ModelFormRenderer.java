@@ -339,6 +339,11 @@ public class ModelFormRenderer extends FormRenderer<ModelForm> implements ITicka
         FormColorBlend.BlendMode blendMode = additive ? FormColorBlend.BlendMode.BRIGHTEN : FormColorBlend.BlendMode.MULTIPLY;
         FormColorBlend.blend(finalColor, formColor, blendMode);
 
+        /* The UI preview mirrors the model (getUIMatrix scales Y by -1), which flips the triangle
+         * winding. With face culling left on, the GPU then discards the front faces and rasterizes
+         * the inside of the mesh, so the texture reads as torn apart. World and the editor camera
+         * are not mirrored, which is why only the UI preview was broken. Disabling cull for the
+         * mirrored pass restores the front faces. */
         if (!model.isCulling())
         {
             RenderSystem.disableCull();

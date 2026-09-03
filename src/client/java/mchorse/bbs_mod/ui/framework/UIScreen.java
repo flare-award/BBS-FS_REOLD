@@ -139,6 +139,12 @@ public class UIScreen extends Screen implements IFileDropListener
     @Override
     public void resize(MinecraftClient client, int width, int height)
     {
+        /* Since 1.21 MinecraftClient.setScreen calls onDisplayed() BEFORE init(client, w, h) -
+         * in 1.20.1 it was the other way round. onDisplayed() asks for a resolution refresh, so
+         * resize() lands here while Screen.client is still null, and super.resize() ->
+         * clearAndInit() -> setInitialFocus() reads it for the navigation type. Attach it by hand. */
+        this.client = client;
+
         super.resize(client, width, height);
 
         this.menu.resize(width, height);
@@ -156,7 +162,7 @@ public class UIScreen extends Screen implements IFileDropListener
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double verticalAmount)
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount)
     {
         return this.menu.mouseScrolled((int) mouseX, (int) mouseY, verticalAmount);
     }
@@ -188,7 +194,7 @@ public class UIScreen extends Screen implements IFileDropListener
     }
 
     @Override
-    public void renderBackground(DrawContext context)
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta)
     {}
 
     @Override
@@ -203,7 +209,7 @@ public class UIScreen extends Screen implements IFileDropListener
         {
             super.render(context, mouseX, mouseY, delta);
 
-            this.menu.context.setTransition(this.client.getTickDelta());
+            this.menu.context.setTransition(this.client.getRenderTickCounter().getTickDelta(true));
             this.menu.renderMenu(this.context, mouseX, mouseY);
             this.menu.context.render.executeRunnables();
         }

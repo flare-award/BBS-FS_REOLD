@@ -7,7 +7,8 @@ import mchorse.bbs_mod.settings.values.mc.ValueItemStack;
 import mchorse.bbs_mod.settings.values.numeric.ValueBoolean;
 import mchorse.bbs_mod.settings.values.numeric.ValueInt;
 import mchorse.bbs_mod.utils.clips.Clip;
-import net.minecraft.enchantment.EnchantmentHelper;
+import mchorse.bbs_mod.utils.EnchantmentUtils;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -79,7 +80,7 @@ public class ReleaseUseItemActionClip extends ItemActionClip
         }
 
         player.setCurrentHand(hand);
-        stack.onStoppedUsing(player.getWorld(), player, Math.max(0, stack.getMaxUseTime() - this.charge.get()));
+        stack.onStoppedUsing(player.getWorld(), player, Math.max(0, stack.getMaxUseTime(player) - this.charge.get()));
         player.clearActiveItem();
         player.setStackInHand(hand, ItemStack.EMPTY);
         player.setStackInHand(other, ItemStack.EMPTY);
@@ -98,10 +99,11 @@ public class ReleaseUseItemActionClip extends ItemActionClip
      */
     private void applyRiptide(LivingEntity actor, SuperFakePlayer player, ItemStack stack)
     {
-        int level = EnchantmentHelper.getRiptide(stack);
+        int level = EnchantmentUtils.getLevel(player.getWorld(), Enchantments.RIPTIDE, stack);
+        /* Since 1.21 the sound constants are registry references, not the events themselves. */
         SoundEvent sound = level >= 3
-            ? SoundEvents.ITEM_TRIDENT_RIPTIDE_3
-            : (level == 2 ? SoundEvents.ITEM_TRIDENT_RIPTIDE_2 : SoundEvents.ITEM_TRIDENT_RIPTIDE_1);
+            ? SoundEvents.ITEM_TRIDENT_RIPTIDE_3.value()
+            : (level == 2 ? SoundEvents.ITEM_TRIDENT_RIPTIDE_2.value() : SoundEvents.ITEM_TRIDENT_RIPTIDE_1.value());
 
         /* The spin is tracked data, so this is what makes every client show
          * the body whirling - the animator poses it from the same flag.
@@ -110,7 +112,8 @@ public class ReleaseUseItemActionClip extends ItemActionClip
          * own tick counts the spin down and clears the flag from there. */
         if (actor instanceof PlayerEntity playerActor)
         {
-            playerActor.useRiptide(20);
+            /* The film records a spin, not an attack - no damage and no thrown stack. */
+            playerActor.useRiptide(20, 0F, ItemStack.EMPTY);
         }
         else if (actor != null)
         {

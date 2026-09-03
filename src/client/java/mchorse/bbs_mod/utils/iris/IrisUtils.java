@@ -19,8 +19,8 @@ import net.irisshaders.iris.shaderpack.option.menu.OptionMenuElementScreen;
 import net.irisshaders.iris.shaderpack.option.menu.OptionMenuLinkElement;
 import net.irisshaders.iris.shaderpack.option.menu.OptionMenuOptionElement;
 import net.irisshaders.iris.shaderpack.properties.ShaderProperties;
-import net.irisshaders.iris.texture.TextureTracker;
-import net.irisshaders.iris.texture.pbr.loader.PBRTextureLoaderRegistry;
+import net.irisshaders.iris.pbr.TextureTracker;
+import net.irisshaders.iris.pbr.loader.PBRTextureLoaderRegistry;
 import net.irisshaders.iris.uniforms.custom.cached.CachedUniform;
 import net.irisshaders.iris.uniforms.custom.cached.FloatCachedUniform;
 import net.irisshaders.iris.uniforms.custom.cached.IntCachedUniform;
@@ -195,7 +195,8 @@ public class IrisUtils
 
         if (pipeline != null)
         {
-            pipeline.getRenderTargetStateListener().setIsMainBound(bound);
+            /* Iris 1.8 folded the render target state listener into the pipeline itself. */
+            pipeline.setIsMainBound(bound);
         }
     }
 

@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class ParticleEmitter
 {
     public ParticleScheme scheme;
@@ -453,9 +455,8 @@ public class ParticleEmitter
             this.setParticleVariables(this.uiParticle, transition);
 
             Matrix4f matrix = stack.peek().getPositionMatrix();
-            BufferBuilder builder = Tessellator.getInstance().getBuffer();
+            BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_TEXTURE_COLOR);
 
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_TEXTURE_COLOR);
 
             for (IComponentParticleRender render : list)
             {
@@ -464,7 +465,7 @@ public class ParticleEmitter
 
             RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
             RenderSystem.disableCull();
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
             RenderSystem.enableCull();
         }
     }
@@ -489,10 +490,9 @@ public class ParticleEmitter
         if (!this.particles.isEmpty())
         {
             Matrix4f matrix = stack.peek().getPositionMatrix();
-            BufferBuilder builder = Tessellator.getInstance().getBuffer();
+            BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, format);
 
             this.bindTexture();
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, format);
 
             for (Particle particle : this.particles)
             {
@@ -508,7 +508,7 @@ public class ParticleEmitter
             RenderSystem.setShader(program);
             RenderSystem.disableBlend();
             RenderSystem.disableCull();
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
             RenderSystem.enableCull();
         }
 

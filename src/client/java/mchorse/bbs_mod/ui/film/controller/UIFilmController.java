@@ -27,6 +27,7 @@ import mchorse.bbs_mod.camera.Camera;
 import mchorse.bbs_mod.camera.utils.TimeUtils;
 import mchorse.bbs_mod.camera.controller.RunnerCameraController;
 import mchorse.bbs_mod.client.BBSRendering;
+import mchorse.bbs_mod.graphics.InverseView;
 import mchorse.bbs_mod.client.BBSShaders;
 import mchorse.bbs_mod.data.types.BaseType;
 import mchorse.bbs_mod.film.BaseFilmController;
@@ -1396,7 +1397,12 @@ public class UIFilmController extends UIElement implements GizmoViewport
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.panel.lastProjection, VertexSorter.BY_Z);
-        RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.panel.lastView).invert());
+        /* Match the original 1.21.1 port: feed the film camera into the view rotation holder */
+        /* The film panel keeps its own view matrix (the same one multiply() below uses); the
+         * original port reads a global world camera here, this fork does not have that global. */
+        InverseView.set(new Matrix3f(this.panel.lastView).invert());
+        /* 1.21 removed the global this used to write; the camera is now the only source of the
+         * view rotation, so there is nothing to install here. */
 
         /* Render the stencil */
         MatrixStack worldStack = this.worldRenderContext.matrixStack();
@@ -1434,14 +1440,14 @@ public class UIFilmController extends UIElement implements GizmoViewport
 
         ShaderProgram previewProgram = BBSShaders.getPickerPreviewProgram();
         Supplier<ShaderProgram> getPickerPreviewProgram = BBSShaders::getPickerPreviewProgram;
-        GlUniform target = previewProgram.getUniform("Target");
+        GlUniform target = previewProgram != null ? previewProgram.getUniform("Target") : null;
 
         if (target != null)
         {
             target.set(index);
         }
 
-        GlUniform highlight = previewProgram.getUniform("HighlightColor");
+        GlUniform highlight = previewProgram != null ? previewProgram.getUniform("HighlightColor") : null;
 
         if (highlight != null)
         {
@@ -1693,7 +1699,7 @@ public class UIFilmController extends UIElement implements GizmoViewport
 
                 FilmControllerContext filmContext = FilmControllerContext.instance
                     .setup(this.getEntities(), entry.getValue(), replay, renderContext)
-                    .transition(isPlaying ? renderContext.tickDelta() : 0)
+                    .transition(isPlaying ? renderContext.tickCounter().getTickDelta(true) : 0)
                     .stencil(this.stencilMap)
                     .relative(replay.relative.get());
 
@@ -1725,7 +1731,7 @@ public class UIFilmController extends UIElement implements GizmoViewport
 
             BaseFilmController.renderEntity(FilmControllerContext.instance
                 .setup(this.getEntities(), entity, replay, renderContext)
-                .transition(isPlaying ? renderContext.tickDelta() : 0)
+                .transition(isPlaying ? renderContext.tickCounter().getTickDelta(true) : 0)
                 .stencil(this.stencilMap)
                 .relative(replay.relative.get())
                 .bone(bone == null ? null : bone.a, bone != null && bone.b)

@@ -107,7 +107,9 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import mchorse.bbs_mod.utils.ItemNbtUtils;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.BuiltinRegistries;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -155,7 +157,7 @@ public class BBSMod implements ModInitializer
 
     public static final EntityType<ActorEntity> ACTOR_ENTITY = Registry.register(
         Registries.ENTITY_TYPE,
-        new Identifier(MOD_ID, "actor"),
+        Identifier.of(MOD_ID, "actor"),
         FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, ActorEntity::new)
             .dimensions(EntityDimensions.fixed(0.6F, 1.8F))
             .trackRangeBlocks(256)
@@ -164,7 +166,7 @@ public class BBSMod implements ModInitializer
 
     public static final EntityType<GunProjectileEntity> GUN_PROJECTILE_ENTITY = Registry.register(
         Registries.ENTITY_TYPE,
-        new Identifier(MOD_ID, "gun_projectile"),
+        Identifier.of(MOD_ID, "gun_projectile"),
         FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, GunProjectileEntity::new)
             .dimensions(EntityDimensions.fixed(0.25F, 0.25F))
             .trackRangeChunks(24)
@@ -202,7 +204,7 @@ public class BBSMod implements ModInitializer
 
     public static final BlockEntityType<ModelBlockEntity> MODEL_BLOCK_ENTITY = Registry.register(
         Registries.BLOCK_ENTITY_TYPE,
-        new Identifier(MOD_ID, "model_block_entity"),
+        Identifier.of(MOD_ID, "model_block_entity"),
         FabricBlockEntityTypeBuilder.create(ModelBlockEntity::new, MODEL_BLOCK).build()
     );
 
@@ -228,7 +230,7 @@ public class BBSMod implements ModInitializer
 
     private static SoundEvent registerSound(String path)
     {
-        Identifier id = new Identifier(MOD_ID, path);
+        Identifier id = Identifier.of(MOD_ID, path);
 
         return Registry.register(Registries.SOUND_EVENT, id, SoundEvent.of(id));
     }
@@ -248,7 +250,6 @@ public class BBSMod implements ModInitializer
     {
         ItemStack stack = new ItemStack(MODEL_BLOCK_ITEM);
         ModelBlockEntity entity = new ModelBlockEntity(BlockPos.ORIGIN, MODEL_BLOCK.getDefaultState());
-        NbtCompound nbt = new NbtCompound();
         BillboardForm form = new BillboardForm();
         ModelProperties properties = entity.getProperties();
 
@@ -257,10 +258,9 @@ public class BBSMod implements ModInitializer
         properties.setForm(form);
         properties.getTransformFirstPerson().translate.set(0F, 0F, -0.25F);
 
-        NbtCompound compound = entity.createNbtWithId();
-
-        nbt.put("BlockEntityTag", compound);
-        stack.setNbt(nbt);
+        /* The item group is built with no world around, so the static registries stand in for a
+         * world's dynamic ones - the model block's own data is plain NBT either way. */
+        ItemNbtUtils.setBlockEntityData(stack, entity.createNbtWithId(BuiltinRegistries.createWrapperLookup()));
 
         return stack;
     }
@@ -482,28 +482,28 @@ public class BBSMod implements ModInitializer
         FabricDefaultAttributeRegistry.register(ACTOR_ENTITY, ActorEntity.createActorAttributes());
 
         /* Blocks */
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "model"), MODEL_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_red"), CHROMA_RED_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_green"), CHROMA_GREEN_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_blue"), CHROMA_BLUE_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_cyan"), CHROMA_CYAN_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_magenta"), CHROMA_MAGENTA_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_yellow"), CHROMA_YELLOW_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_black"), CHROMA_BLACK_BLOCK);
-        Registry.register(Registries.BLOCK, new Identifier(MOD_ID, "chroma_white"), CHROMA_WHITE_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "model"), MODEL_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_red"), CHROMA_RED_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_green"), CHROMA_GREEN_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_blue"), CHROMA_BLUE_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_cyan"), CHROMA_CYAN_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_magenta"), CHROMA_MAGENTA_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_yellow"), CHROMA_YELLOW_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_black"), CHROMA_BLACK_BLOCK);
+        Registry.register(Registries.BLOCK, Identifier.of(MOD_ID, "chroma_white"), CHROMA_WHITE_BLOCK);
 
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "model"), MODEL_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "gun"), GUN_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_red"), CHROMA_RED_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_green"), CHROMA_GREEN_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_blue"), CHROMA_BLUE_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_cyan"), CHROMA_CYAN_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_magenta"), CHROMA_MAGENTA_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_yellow"), CHROMA_YELLOW_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_black"), CHROMA_BLACK_BLOCK_ITEM);
-        Registry.register(Registries.ITEM, new Identifier(MOD_ID, "chroma_white"), CHROMA_WHITE_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "model"), MODEL_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "gun"), GUN_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_red"), CHROMA_RED_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_green"), CHROMA_GREEN_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_blue"), CHROMA_BLUE_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_cyan"), CHROMA_CYAN_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_magenta"), CHROMA_MAGENTA_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_yellow"), CHROMA_YELLOW_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_black"), CHROMA_BLACK_BLOCK_ITEM);
+        Registry.register(Registries.ITEM, Identifier.of(MOD_ID, "chroma_white"), CHROMA_WHITE_BLOCK_ITEM);
 
-        Registry.register(Registries.ITEM_GROUP, new Identifier(MOD_ID, "main"), ITEM_GROUP);
+        Registry.register(Registries.ITEM_GROUP, Identifier.of(MOD_ID, "main"), ITEM_GROUP);
     }
 
     private void registerEvents()
@@ -519,7 +519,7 @@ public class BBSMod implements ModInitializer
         });
 
         ServerLifecycleEvents.SERVER_STARTED.register((event) -> worldFolder = event.getSavePath(WorldSavePath.ROOT).toFile());
-        ServerPlayConnectionEvents.JOIN.register((a, b, c) -> ServerNetwork.sendHandshake(c, b));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ServerNetwork.sendHandshake(server, handler.player));
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> actions.stopFor(handler.getPlayer()));
 
         ActionHandler.registerHandlers(actions);

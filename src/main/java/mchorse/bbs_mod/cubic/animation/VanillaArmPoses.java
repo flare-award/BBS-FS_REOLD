@@ -204,7 +204,7 @@ public class VanillaArmPoses
         charging.pitch(-0.97079635F);
         other.pitch(charging.pitch());
 
-        float pullTime = use == null ? 25F : Math.max(1, CrossbowItem.getPullTime(use.stack()));
+        float pullTime = use == null ? 25F : Math.max(1, CrossbowItem.getPullTime(use.stack(), null));
         float used = MathHelper.clamp(use == null ? 0F : use.elapsed(), 0F, pullTime);
         float progress = used / pullTime;
 

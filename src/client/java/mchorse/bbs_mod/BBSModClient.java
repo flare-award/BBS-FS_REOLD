@@ -550,9 +550,8 @@ public class BBSModClient implements ClientModInitializer
                     stack.translate(0F, 0F, -d);
 
                     RenderSystem.enableDepthTest();
-                    BufferBuilder builder = Tessellator.getInstance().getBuffer();
+                    BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
-                    builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
                     float fov = MinecraftClient.getInstance().options.getFov().getValue();
                     float dd = d * (float) Math.pow(fov / 40F, 2F);
@@ -567,7 +566,7 @@ public class BBSModClient implements ClientModInitializer
 
                     RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
-                    BufferRenderer.drawWithGlobalProgram(builder.end());
+                    Draw.drawBuilt(builder);
                     RenderSystem.disableDepthTest();
 
                     stack.pop();
@@ -683,13 +682,14 @@ public class BBSModClient implements ClientModInitializer
         /* Baked structures hold sprite UVs — stale after resource reload (pack switch, F3+A) */
         InvalidateRenderStateCallback.EVENT.register(BakedStructure::invalidateAll);
 
-        HudRenderCallback.EVENT.register((drawContext, tickDelta) ->
+        /* The callback hands over the tick counter itself since 1.20.5, not the fraction. */
+        HudRenderCallback.EVENT.register((drawContext, tickCounter) ->
         {
-            BBSRendering.renderHud(drawContext, tickDelta);
+            BBSRendering.renderHud(drawContext, tickCounter.getTickDelta(true));
 
             if (gunZoom != null)
             {
-                gunZoom.update(keyZoom.isPressed(), MinecraftClient.getInstance().getLastFrameDuration());
+                gunZoom.update(keyZoom.isPressed(), MinecraftClient.getInstance().getRenderTickCounter().getLastFrameDuration());
 
                 if (gunZoom.canBeRemoved())
                 {

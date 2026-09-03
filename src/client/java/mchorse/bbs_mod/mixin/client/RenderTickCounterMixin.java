@@ -11,9 +11,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(RenderTickCounter.class)
+@Mixin(RenderTickCounter.Dynamic.class)
 public class RenderTickCounterMixin
 {
+    /* Since 1.21.1 RenderTickCounter is an interface; the client's counter is its Dynamic
+     * implementation, which owns these three fields. */
     @Shadow
     public float tickDelta;
 
@@ -27,7 +29,10 @@ public class RenderTickCounterMixin
 
     private long lastFrameTime;
 
-    @Inject(method = "beginRenderTick", at = @At("HEAD"), cancellable = true)
+    /* Dynamic has two beginRenderTick overloads since 1.21.1 - the one-arg one is the entry point
+     * MinecraftClient calls, the two-arg one is what it delegates to, so only the entry point is
+     * hooked or the recording would advance twice per frame. */
+    @Inject(method = "beginRenderTick(J)I", at = @At("HEAD"), cancellable = true)
     public void onBeginRenderTick(long timeMillis, CallbackInfoReturnable<Integer> info)
     {
         VideoRecorder videoRecorder = BBSModClient.getVideoRecorder();

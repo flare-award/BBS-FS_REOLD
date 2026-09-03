@@ -48,6 +48,8 @@ import java.util.Set;
  * as the visible marker — no oversized hitboxes in the hover highlight, and
  * hidden markers are not pickable at all.
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public final class ModelIKDebug
 {
     private ModelIKDebug()
@@ -162,8 +164,7 @@ public final class ModelIKDebug
             stack.multiply(RotationAxis.POSITIVE_Y.rotation(MathUtils.PI));
         }
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         for (ModelIKCache.CompiledChain chain : compiled.chains())
         {
@@ -190,7 +191,7 @@ public final class ModelIKDebug
             }
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         stack.pop();
 
@@ -300,12 +301,11 @@ public final class ModelIKDebug
         /* Lines: hairline GL lines by default, boxes once a thickness is set. */
         if (anyLine && !boxes)
         {
-            BufferBuilder lines = Tessellator.getInstance().getBuffer();
-            lines.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
+            BufferBuilder lines = Tessellator.getInstance().begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
 
             emitLines(lines, matrix, 0F, dash, pts, target, pole, a, config);
 
-            BufferRenderer.drawWithGlobalProgram(lines.end());
+            Draw.drawBuilt(lines);
         }
 
         if (!anyDot && !boxes)
@@ -314,8 +314,7 @@ public final class ModelIKDebug
         }
 
         /* Solid geometry: joint/accent markers, plus the thick lines. */
-        BufferBuilder dots = Tessellator.getInstance().getBuffer();
-        dots.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
+        BufferBuilder dots = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         if (boxes)
         {
@@ -349,7 +348,7 @@ public final class ModelIKDebug
             DebugOverlay.marker(dots, stack, config.pole.shape.get(), pole, unit * config.pole.size.get(), DebugOverlay.rgb(config.pole.color.get()), a);
         }
 
-        BufferRenderer.drawWithGlobalProgram(dots.end());
+        Draw.drawBuilt(dots);
     }
 
     /** The chain's wires plus the bridges to the goal and the pole — the bridges are always dashed relationship lines. */

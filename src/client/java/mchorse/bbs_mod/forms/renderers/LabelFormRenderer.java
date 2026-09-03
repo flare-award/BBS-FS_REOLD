@@ -28,6 +28,8 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class LabelFormRenderer extends FormRenderer<LabelForm>
 {
     public static void fillQuad(BufferBuilder builder, MatrixStack stack, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, float r, float g, float b, float a)
@@ -35,12 +37,12 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
         Matrix4f matrix4f = stack.peek().getPositionMatrix();
 
         /* 1 - BR, 2 - BL, 3 - TL, 4 - TR */
-        builder.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).texture(0F, 0F).next();
-        builder.vertex(matrix4f, x2, y2, z2).color(r, g, b, a).texture(0F, 0F).next();
-        builder.vertex(matrix4f, x3, y3, z3).color(r, g, b, a).texture(0F, 0F).next();
-        builder.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).texture(0F, 0F).next();
-        builder.vertex(matrix4f, x3, y3, z3).color(r, g, b, a).texture(0F, 0F).next();
-        builder.vertex(matrix4f, x4, y4, z4).color(r, g, b, a).texture(0F, 0F).next();
+        builder.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).texture(0F, 0F);
+        builder.vertex(matrix4f, x2, y2, z2).color(r, g, b, a).texture(0F, 0F);
+        builder.vertex(matrix4f, x3, y3, z3).color(r, g, b, a).texture(0F, 0F);
+        builder.vertex(matrix4f, x1, y1, z1).color(r, g, b, a).texture(0F, 0F);
+        builder.vertex(matrix4f, x3, y3, z3).color(r, g, b, a).texture(0F, 0F);
+        builder.vertex(matrix4f, x4, y4, z4).color(r, g, b, a).texture(0F, 0F);
     }
 
     public LabelFormRenderer(LabelForm form)
@@ -307,9 +309,8 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
         context.stack.push();
         context.stack.translate(0, 0, -0.2F);
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_TEXTURE_COLOR);
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE);
 
         fillQuad(
             builder, context.stack,
@@ -329,7 +330,7 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
             VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
             buffer.bind();
-            buffer.upload(builder.end());
+            Draw.uploadBuilt(buffer, builder);
             VertexBuffer.unbind();
 
             FormTranslucentQueue.add(new FormTranslucentQueue.VertexBufferCommand(
@@ -340,7 +341,7 @@ public class LabelFormRenderer extends FormRenderer<LabelForm>
         }
         else
         {
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
         }
 
         context.stack.pop();

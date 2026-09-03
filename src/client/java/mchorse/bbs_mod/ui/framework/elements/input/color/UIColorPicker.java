@@ -30,6 +30,8 @@ import java.util.function.Consumer;
  *
  * This is the one that is responsible for picking colors
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIColorPicker extends UIElement
 {
     private static final int DRAG_HSV_PICKER = 1;
@@ -81,20 +83,19 @@ public class UIColorPicker extends UIElement
     public static void renderAlphaPreviewQuad(Batcher2D batcher, int x1, int y1, int x2, int y2, Color color)
     {
         Matrix4f matrix4f = batcher.getContext().getMatrices().peek().getPositionMatrix();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.enableBlend();
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
-        builder.vertex(matrix4f, x1, y1, 0F).color(color.r, color.g, color.b, 1).next();
-        builder.vertex(matrix4f, x1, y2, 0F).color(color.r, color.g, color.b, 1).next();
-        builder.vertex(matrix4f, x2, y1, 0F).color(color.r, color.g, color.b, 1).next();
-        builder.vertex(matrix4f, x2, y1, 0F).color(color.r, color.g, color.b, color.a).next();
-        builder.vertex(matrix4f, x1, y2, 0F).color(color.r, color.g, color.b, color.a).next();
-        builder.vertex(matrix4f, x2, y2, 0F).color(color.r, color.g, color.b, color.a).next();
+        builder.vertex(matrix4f, x1, y1, 0F).color(color.r, color.g, color.b, 1);
+        builder.vertex(matrix4f, x1, y2, 0F).color(color.r, color.g, color.b, 1);
+        builder.vertex(matrix4f, x2, y1, 0F).color(color.r, color.g, color.b, 1);
+        builder.vertex(matrix4f, x2, y1, 0F).color(color.r, color.g, color.b, color.a);
+        builder.vertex(matrix4f, x1, y2, 0F).color(color.r, color.g, color.b, color.a);
+        builder.vertex(matrix4f, x2, y2, 0F).color(color.r, color.g, color.b, color.a);
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     public UIColorPicker(Consumer<Integer> callback)

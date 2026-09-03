@@ -29,6 +29,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -110,7 +111,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                Item item = Registries.ITEM.get(new Identifier(id));
+                Item item = Registries.ITEM.get(Identifier.of(id));
 
                 return new ItemStack(item).getName().getString();
             }
@@ -129,7 +130,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                return Registries.BLOCK.get(new Identifier(id)).getName().getString();
+                return Registries.BLOCK.get(Identifier.of(id)).getName().getString();
             }
             catch (Exception e)
             {
@@ -144,7 +145,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         {
             try
             {
-                Identifier rid = new Identifier(id);
+                Identifier rid = Identifier.of(id);
 
                 if (mode == PickerMode.ITEM)
                 {
@@ -239,7 +240,8 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
                 return;
             }
 
-            this.itemStack.setCustomName(value.isEmpty() ? null : Text.literal(value));
+            /* Setting the component to null removes it, which is what an empty name means. */
+            this.itemStack.set(DataComponentTypes.CUSTOM_NAME, value.isEmpty() ? null : Text.literal(value));
             this.acceptItem(this.itemStack.copy());
             this.updateItemNbt();
         });
@@ -265,7 +267,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
             try
             {
                 NbtCompound nbt = new StringNbtReader(new StringReader(v.toString())).parseCompound();
-                ItemStack parsed = ItemStack.fromNbt(nbt);
+                ItemStack parsed = ItemStack.fromNbtOrEmpty(MinecraftClient.getInstance().world.getRegistryManager(), nbt);
 
                 this.acceptItem(parsed);
 
@@ -359,7 +361,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
 
         if (this.mode == PickerMode.ITEM)
         {
-            Item item = Registries.ITEM.get(new Identifier(id));
+            Item item = Registries.ITEM.get(Identifier.of(id));
             ItemStack selected;
 
             if (this.itemStack != null && !this.itemStack.isEmpty() && this.itemStack.getItem() == item)
@@ -372,9 +374,9 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
 
                 selected.setCount(Math.max(1, this.itemStack.getCount()));
 
-                if (this.itemStack.hasCustomName())
+                if (this.itemStack.contains(DataComponentTypes.CUSTOM_NAME))
                 {
-                    selected.setCustomName(this.itemStack.getName());
+                    selected.set(DataComponentTypes.CUSTOM_NAME, this.itemStack.getName());
                 }
             }
 
@@ -385,7 +387,7 @@ public class UIUnifiedPickOverlayPanel extends UIOverlayPanel
         }
         else
         {
-            Block block = Registries.BLOCK.get(new Identifier(id));
+            Block block = Registries.BLOCK.get(Identifier.of(id));
             BlockState selectedState = block.getDefaultState();
 
             if (this.blockState != null && this.blockState.getBlock() == block)

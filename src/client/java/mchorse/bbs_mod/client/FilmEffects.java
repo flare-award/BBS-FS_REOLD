@@ -36,6 +36,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
@@ -59,6 +60,8 @@ import java.util.Map;
  * on the camera timeline, its keyframed channels override the matching sliders for
  * that frame - which is how the filters animate in playback and export alike.</p>
  */
+import mchorse.bbs_mod.graphics.Draw;
+
 public class FilmEffects
 {
     /* Photo layer modes: over the whole frame, behind the film's actors,
@@ -1128,11 +1131,11 @@ public class FilmEffects
 
         Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
         VertexSorter previousSorter = RenderSystem.getVertexSorting();
-        MatrixStack modelViewStack = RenderSystem.getModelViewStack();
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
 
         RenderSystem.setProjectionMatrix(new Matrix4f(), VertexSorter.BY_Z);
-        modelViewStack.push();
-        modelViewStack.loadIdentity();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
@@ -1172,7 +1175,7 @@ public class FilmEffects
             RenderSystem.enableDepthTest();
             RenderSystem.enableCull();
             RenderSystem.disableBlend();
-            modelViewStack.pop();
+            modelViewStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
         }
@@ -1197,13 +1200,13 @@ public class FilmEffects
 
         Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
         VertexSorter previousSorter = RenderSystem.getVertexSorting();
-        MatrixStack modelViewStack = RenderSystem.getModelViewStack();
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         Matrix4f identity = new Matrix4f();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
 
         RenderSystem.setProjectionMatrix(identity, VertexSorter.BY_Z);
-        modelViewStack.push();
-        modelViewStack.loadIdentity();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
         RenderSystem.colorMask(false, false, false, false);
         RenderSystem.enableDepthTest();
@@ -1214,12 +1217,11 @@ public class FilmEffects
 
         try
         {
-            builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-            builder.vertex(identity, -1F, 1F, -1F).next();
-            builder.vertex(identity, -1F, -1F, -1F).next();
-            builder.vertex(identity, 1F, -1F, -1F).next();
-            builder.vertex(identity, 1F, 1F, -1F).next();
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            builder.vertex(identity, -1F, 1F, -1F);
+            builder.vertex(identity, -1F, -1F, -1F);
+            builder.vertex(identity, 1F, -1F, -1F);
+            builder.vertex(identity, 1F, 1F, -1F);
+            Draw.drawBuilt(builder);
         }
         catch (Exception e)
         {
@@ -1232,7 +1234,7 @@ public class FilmEffects
             RenderSystem.colorMask(true, true, true, true);
             RenderSystem.depthFunc(GL11.GL_LEQUAL);
             RenderSystem.enableCull();
-            modelViewStack.pop();
+            modelViewStack.popMatrix();
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
         }
@@ -1265,7 +1267,7 @@ public class FilmEffects
 
                 matrices.push();
                 matrices.translate(pos.getX() - cameraPos.x, pos.getY() - cameraPos.y, pos.getZ() - cameraPos.z);
-                mc.getBlockEntityRenderDispatcher().render(entity, context.tickDelta(), matrices, immediate);
+                mc.getBlockEntityRenderDispatcher().render(entity, context.tickCounter().getTickDelta(true), matrices, immediate);
                 matrices.pop();
             }
 
@@ -1299,10 +1301,9 @@ public class FilmEffects
         float aspect = width / (float) height;
         int flipMode = Math.round(flip);
         Matrix4f identity = new Matrix4f();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
         BBSModClient.getTextures().bindTexture(photo);
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
 
         /* Counterclockwise from the top left corner */
         float[] corners = {-1F, 1F, -1F, -1F, 1F, -1F, 1F, 1F};
@@ -1330,10 +1331,10 @@ public class FilmEffects
                 u = 1F - u;
             }
 
-            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity).next();
+            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /**

@@ -23,6 +23,8 @@ import net.minecraft.client.render.VertexFormats;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
 {
     private static final Color ENVELOPE_COLOR = new Color(0, 0, 0, 0.25F);
@@ -95,10 +97,9 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
      */
     private void renderEnvelope(UIContext context, Envelope envelope, int duration, int x1, int y1, int x2, int y2)
     {
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
         Matrix4f matrix = context.batcher.getContext().getMatrices().peek().getPositionMatrix();
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         if (envelope.keyframes.get())
         {
@@ -112,7 +113,7 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
             this.renderSimpleEnvelope(builder, matrix, envelope, duration, x1, y1, x2, y2);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 
     /**
@@ -130,13 +131,13 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
                 Vector2f point = this.calculateEnvelopePoint(vector, (int) keyframe.getTick(), keyframe.getValue().floatValue(), duration, x1, y1, x2, y2);
                 Vector2f prevPoint = this.calculateEnvelopePoint(previous, (int) prevKeyframe.getTick(), prevKeyframe.getValue().floatValue(), duration, x1, y1, x2, y2);
 
-                builder.vertex(matrix, prevPoint.x, y2, 0F).color(c).next();
-                builder.vertex(matrix, point.x, point.y, 0F).color(c).next();
-                builder.vertex(matrix, prevPoint.x, prevPoint.y, 0F).color(c).next();
+                builder.vertex(matrix, prevPoint.x, y2, 0F).color(c);
+                builder.vertex(matrix, point.x, point.y, 0F).color(c);
+                builder.vertex(matrix, prevPoint.x, prevPoint.y, 0F).color(c);
 
-                builder.vertex(matrix, point.x, y2, 0F).color(c).next();
-                builder.vertex(matrix, point.x, point.y, 0F).color(c).next();
-                builder.vertex(matrix, prevPoint.x, y2, 0F).color(c).next();
+                builder.vertex(matrix, point.x, y2, 0F).color(c);
+                builder.vertex(matrix, point.x, point.y, 0F).color(c);
+                builder.vertex(matrix, prevPoint.x, y2, 0F).color(c);
             }
 
             prevKeyframe = keyframe;
@@ -147,13 +148,13 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
         {
             Vector2f point = this.calculateEnvelopePoint(vector, (int) prevKeyframe.getTick(), prevKeyframe.getValue().floatValue(), duration, x1, y1, x2, y2);
 
-            builder.vertex(matrix, point.x, y2, 0F).color(c).next();
-            builder.vertex(matrix, x2, point.y, 0F).color(c).next();
-            builder.vertex(matrix, point.x, point.y, 0F).color(c).next();
+            builder.vertex(matrix, point.x, y2, 0F).color(c);
+            builder.vertex(matrix, x2, point.y, 0F).color(c);
+            builder.vertex(matrix, point.x, point.y, 0F).color(c);
 
-            builder.vertex(matrix, x2, y2, 0F).color(c).next();
-            builder.vertex(matrix, x2, point.y, 0F).color(c).next();
-            builder.vertex(matrix, point.x, y2, 0F).color(c).next();
+            builder.vertex(matrix, x2, y2, 0F).color(c);
+            builder.vertex(matrix, x2, point.y, 0F).color(c);
+            builder.vertex(matrix, point.x, y2, 0F).color(c);
         }
     }
 
@@ -183,13 +184,13 @@ public class UIClipRenderer <T extends Clip> implements IUIClipRenderer<T>
             float x = x1 + width * f;
             float y = y1 + height * (1 - MathUtils.clamp(envelope.factor(duration, duration * f), 0F, 1F));
 
-            builder.vertex(matrix, prevX, prevY, 0F).color(c).next();
-            builder.vertex(matrix, prevX, y2, 0F).color(c).next();
-            builder.vertex(matrix, x, y2, 0F).color(c).next();
+            builder.vertex(matrix, prevX, prevY, 0F).color(c);
+            builder.vertex(matrix, prevX, y2, 0F).color(c);
+            builder.vertex(matrix, x, y2, 0F).color(c);
 
-            builder.vertex(matrix, prevX, prevY, 0F).color(c).next();
-            builder.vertex(matrix, x, y2, 0F).color(c).next();
-            builder.vertex(matrix, x, y, 0F).color(c).next();
+            builder.vertex(matrix, prevX, prevY, 0F).color(c);
+            builder.vertex(matrix, x, y2, 0F).color(c);
+            builder.vertex(matrix, x, y, 0F).color(c);
 
             prevX = x;
             prevY = y;

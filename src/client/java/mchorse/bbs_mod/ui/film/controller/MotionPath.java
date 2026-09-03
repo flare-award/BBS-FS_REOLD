@@ -140,13 +140,12 @@ public class MotionPath
         Matrix4f matrix = stack.peek().getPositionMatrix();
         float halfWidth = config.width.get() * 0.5F;
 
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
         RenderSystem.disableDepthTest();
         RenderSystem.disableCull();
 
-        builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR);
 
         /* The interpolated curve: a camera-facing ribbon with a dot on every
          * tick (so the spacing shows speed), the exact endpoints kept. */
@@ -204,7 +203,7 @@ public class MotionPath
             dot(builder, stack, POINT_B, config.currentSize.get(), SCRATCH);
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
 
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();
@@ -299,13 +298,13 @@ public class MotionPath
         float bx1 = (float) (b.x + sx), by1 = (float) (b.y + sy), bz1 = (float) (b.z + sz);
         float bx2 = (float) (b.x - sx), by2 = (float) (b.y - sy), bz2 = (float) (b.z - sz);
 
-        builder.vertex(matrix, ax1, ay1, az1).color(colorA[0], colorA[1], colorA[2], 1F).next();
-        builder.vertex(matrix, ax2, ay2, az2).color(colorA[0], colorA[1], colorA[2], 1F).next();
-        builder.vertex(matrix, bx2, by2, bz2).color(colorB[0], colorB[1], colorB[2], 1F).next();
+        builder.vertex(matrix, ax1, ay1, az1).color(colorA[0], colorA[1], colorA[2], 1F);
+        builder.vertex(matrix, ax2, ay2, az2).color(colorA[0], colorA[1], colorA[2], 1F);
+        builder.vertex(matrix, bx2, by2, bz2).color(colorB[0], colorB[1], colorB[2], 1F);
 
-        builder.vertex(matrix, ax1, ay1, az1).color(colorA[0], colorA[1], colorA[2], 1F).next();
-        builder.vertex(matrix, bx2, by2, bz2).color(colorB[0], colorB[1], colorB[2], 1F).next();
-        builder.vertex(matrix, bx1, by1, bz1).color(colorB[0], colorB[1], colorB[2], 1F).next();
+        builder.vertex(matrix, ax1, ay1, az1).color(colorA[0], colorA[1], colorA[2], 1F);
+        builder.vertex(matrix, bx2, by2, bz2).color(colorB[0], colorB[1], colorB[2], 1F);
+        builder.vertex(matrix, bx1, by1, bz1).color(colorB[0], colorB[1], colorB[2], 1F);
     }
 
     private static void unpack(int color, float[] out)

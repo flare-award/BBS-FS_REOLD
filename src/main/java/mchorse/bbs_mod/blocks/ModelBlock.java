@@ -16,6 +16,9 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
+import mchorse.bbs_mod.utils.ItemNbtUtils;
+import net.minecraft.registry.BuiltinRegistries;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.state.StateManager;
@@ -61,22 +64,29 @@ public class ModelBlock extends Block implements BlockEntityProvider, Waterlogga
     }
 
     @Override
-    public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state)
+    public ItemStack getPickStack(WorldView world, BlockPos pos, BlockState state)
     {
         BlockEntity entity = world.getBlockEntity(pos);
 
         if (entity instanceof ModelBlockEntity modelBlock)
         {
             ItemStack stack = new ItemStack(this);
-            NbtCompound compound = new NbtCompound();
 
-            compound.put("BlockEntityTag", modelBlock.createNbtWithId());
-            stack.setNbt(compound);
+            ItemNbtUtils.setBlockEntityData(stack, modelBlock.createNbtWithId(registriesOf(world)));
 
             return stack;
         }
 
         return super.getPickStack(world, pos, state);
+    }
+
+    /**
+     * A pick block can run against a bare {@code WorldView} with no registries of its own, so the
+     * static ones stand in - the model block's payload is plain NBT either way.
+     */
+    private static RegistryWrapper.WrapperLookup registriesOf(WorldView world)
+    {
+        return world instanceof World w ? w.getRegistryManager() : BuiltinRegistries.createWrapperLookup();
     }
 
     @Override
@@ -110,20 +120,17 @@ public class ModelBlock extends Block implements BlockEntityProvider, Waterlogga
         return new ModelBlockEntity(pos, state);
     }
 
+    /* 1.21 dropped the Hand from onUse - this path is the main hand one, which is all the mod
+     * ever acted on anyway. */
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit)
+    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit)
     {
-        if (hand == Hand.MAIN_HAND)
+        if (player instanceof ServerPlayerEntity serverPlayer)
         {
-            if (player instanceof ServerPlayerEntity serverPlayer)
-            {
-                ServerNetwork.sendClickedModelBlock(serverPlayer, pos);
-            }
-
-            return ActionResult.SUCCESS;
+            ServerNetwork.sendClickedModelBlock(serverPlayer, pos);
         }
 
-        return super.onUse(state, world, pos, player, hand, hit);
+        return super.onUse(state, world, pos, player, hit);
     }
 
     /* Waterloggable implementation */
@@ -142,10 +149,8 @@ public class ModelBlock extends Block implements BlockEntityProvider, Waterlogga
             if (be instanceof ModelBlockEntity model)
             {
                 ItemStack stack = new ItemStack(this);
-                NbtCompound wrapper = new NbtCompound();
 
-                wrapper.put("BlockEntityTag", model.createNbtWithId());
-                stack.setNbt(wrapper);
+                ItemNbtUtils.setBlockEntityData(stack, model.createNbtWithId(world.getRegistryManager()));
 
                 ItemScatterer.spawn(world, pos, DefaultedList.ofSize(1, stack));
             }

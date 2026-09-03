@@ -191,7 +191,7 @@ public class MobFormRenderer extends FormRenderer<MobForm> implements ITickable
         catch (Exception e)
         {}
 
-        this.entity = Registries.ENTITY_TYPE.get(new Identifier(id)).create(MinecraftClient.getInstance().world);
+        this.entity = Registries.ENTITY_TYPE.get(Identifier.of(id)).create(MinecraftClient.getInstance().world);
 
         if (this.entity == null && this.form.isPlayer())
         {
@@ -438,12 +438,19 @@ public class MobFormRenderer extends FormRenderer<MobForm> implements ITickable
             this.entity.setSneaking(entity.isSneaking());
             this.entity.setSprinting(entity.isSprinting());
             this.entity.setPose(entity.isSneaking() ? EntityPose.CROUCHING : EntityPose.STANDING);
-            this.entity.equipStack(EquipmentSlot.MAINHAND, entity.getEquipmentStack(EquipmentSlot.MAINHAND));
-            this.entity.equipStack(EquipmentSlot.OFFHAND, entity.getEquipmentStack(EquipmentSlot.OFFHAND));
-            this.entity.equipStack(EquipmentSlot.HEAD, entity.getEquipmentStack(EquipmentSlot.HEAD));
-            this.entity.equipStack(EquipmentSlot.CHEST, entity.getEquipmentStack(EquipmentSlot.CHEST));
-            this.entity.equipStack(EquipmentSlot.LEGS, entity.getEquipmentStack(EquipmentSlot.LEGS));
-            this.entity.equipStack(EquipmentSlot.FEET, entity.getEquipmentStack(EquipmentSlot.FEET));
+            if (this.entity instanceof LivingEntity living)
+            {
+                /* Enumerate the slots explicitly, as the original 1.21.1 port does: since 1.21
+                 * EquipmentSlot.values() also contains BODY, which most living entities do not
+                 * accept - handing it to equipStack() is what crashed the morphing list when it
+                 * reached the vanilla mob models. */
+                living.equipStack(EquipmentSlot.MAINHAND, entity.getEquipmentStack(EquipmentSlot.MAINHAND));
+                living.equipStack(EquipmentSlot.OFFHAND, entity.getEquipmentStack(EquipmentSlot.OFFHAND));
+                living.equipStack(EquipmentSlot.HEAD, entity.getEquipmentStack(EquipmentSlot.HEAD));
+                living.equipStack(EquipmentSlot.CHEST, entity.getEquipmentStack(EquipmentSlot.CHEST));
+                living.equipStack(EquipmentSlot.LEGS, entity.getEquipmentStack(EquipmentSlot.LEGS));
+                living.equipStack(EquipmentSlot.FEET, entity.getEquipmentStack(EquipmentSlot.FEET));
+            }
             this.entity.age = entity.getAge();
             this.entity.noClip = true;
 

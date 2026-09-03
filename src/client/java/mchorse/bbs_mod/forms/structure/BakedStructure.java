@@ -12,10 +12,12 @@ import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.TexturedRenderLayers;
+import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
@@ -29,6 +31,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -55,8 +58,8 @@ public class BakedStructure
 
     private static final Direction[] DIRECTIONS = Direction.values();
 
-    /** Scratch builder reused across bakes (grows once and stays). */
-    private static BufferBuilder scratch;
+    /** Backing memory for the scratch builder, reused across bakes (grows once and stays). */
+    private static BufferAllocator scratchAllocator;
 
     private final List<BakedLayer> layers = new ArrayList<>();
 
@@ -347,14 +350,17 @@ public class BakedStructure
     /** Begin a scratch vertex buffer for the given draw mode + format (a single reused builder). */
     private static BufferBuilder beginBuffer(VertexFormat.DrawMode mode, VertexFormat format)
     {
-        if (scratch == null)
+        if (scratchAllocator == null)
         {
-            scratch = new BufferBuilder(786432);
+            scratchAllocator = new BufferAllocator(786432);
         }
 
-        scratch.begin(mode, format);
+        scratchAllocator.reset();
 
-        return scratch;
+        /* Since 1.21 a BufferBuilder is created per draw mode/format pair and draws its memory from
+         * an allocator, so "restarting" the scratch means handing out a fresh builder over the same
+         * (reset) allocator. */
+        return new BufferBuilder(scratchAllocator, mode, format);
     }
 
     /** End the builder and copy its vertices into a tight {@code POSITION_COLOR_TEXTURE_LIGHT_NORMAL}
@@ -362,20 +368,21 @@ public class BakedStructure
      *  {@link BakedBuffer} with null data if the format misses standard block attributes. */
     private static BakedBuffer endAndNormalize(BufferBuilder builder)
     {
-        BufferBuilder.BuiltBuffer built = builder.endNullable();
+        BuiltBuffer built = builder.endNullable();
 
         if (built == null)
         {
             return null;
         }
 
-        BufferBuilder.DrawParameters parameters = built.getParameters();
-        int count = parameters.vertexCount();
-        ByteBuffer copy = normalize(built.getVertexBuffer(), parameters.format(), count);
+        try (built)
+        {
+            BuiltBuffer.DrawParameters parameters = built.getDrawParameters();
+            int count = parameters.vertexCount();
+            ByteBuffer copy = normalize(built.getBuffer(), parameters.format(), count);
 
-        built.release();
-
-        return new BakedBuffer(copy, count);
+            return new BakedBuffer(copy, count);
+        }
     }
 
     /**
@@ -406,13 +413,13 @@ public class BakedStructure
 
         for (VertexFormatElement element : format.getElements())
         {
-            if (element == VertexFormats.POSITION_ELEMENT) posOffset = offset;
-            else if (element == VertexFormats.COLOR_ELEMENT) colorOffset = offset;
-            else if (element == VertexFormats.TEXTURE_ELEMENT) uvOffset = offset;
-            else if (element == VertexFormats.LIGHT_ELEMENT) lightOffset = offset;
-            else if (element == VertexFormats.NORMAL_ELEMENT) normalOffset = offset;
+            if (element == VertexFormatElement.POSITION) posOffset = offset;
+            else if (element == VertexFormatElement.COLOR) colorOffset = offset;
+            else if (element == VertexFormatElement.UV_0) uvOffset = offset;
+            else if (element == VertexFormatElement.UV_2) lightOffset = offset;
+            else if (element == VertexFormatElement.NORMAL) normalOffset = offset;
 
-            offset += element.getByteLength();
+            offset += element.getSizeInBytes();
         }
 
         if (posOffset < 0 || colorOffset < 0 || uvOffset < 0 || lightOffset < 0 || normalOffset < 0)
@@ -445,7 +452,7 @@ public class BakedStructure
             .overlay(overlay)
             .light(blockLight, skyLight)
             .normal(nx, ny, nz)
-            .next();
+            ;
     }
 
     /** Bulk copy the baked layer into the builder's internal buffer, then transform/tint/relight the
@@ -460,10 +467,20 @@ public class BakedStructure
 
         int bytes = count * BakedBuffer.STRIDE;
 
-        builder.grow(bytes);
+        /* The bulk copy writes the baked layout byte for byte, so the target layer has to carry
+         * exactly POSITION_COLOR_TEXTURE_LIGHT_NORMAL (an Iris-extended stride or a missing
+         * attribute would shred the fixup below). */
+        if (!VertexFormats.POSITION_COLOR_TEXTURE_LIGHT_NORMAL.equals(builder.format) || !builder.building)
+        {
+            return false;
+        }
 
-        ByteBuffer dst = builder.buffer;
-        int start = builder.elementOffset;
+        /* Since 1.21 the builder writes into a BufferAllocator instead of an on-heap ByteBuffer:
+         * reserve one contiguous run of off-heap memory, copy into it, then point the builder at
+         * it (this is exactly what Sodium's own buffer-builder mixin does on its fast path). */
+        long pointer = builder.allocator.allocate(bytes);
+        ByteBuffer dst = MemoryUtil.memByteBuffer(pointer, bytes);
+        int start = 0;
 
         dst.put(start, src, 0, bytes);
 
@@ -516,7 +533,8 @@ public class BakedStructure
         }
 
         builder.vertexCount += count;
-        builder.elementOffset += bytes;
+        builder.vertexPointer = pointer + bytes - builder.vertexSizeByte;
+        builder.currentMask = 0;
 
         return true;
     }

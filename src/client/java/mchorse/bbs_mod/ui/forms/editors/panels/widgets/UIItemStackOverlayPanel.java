@@ -18,6 +18,8 @@ import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.text.Text;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
@@ -54,7 +56,8 @@ public class UIItemStackOverlayPanel extends UIOverlayPanel
         this.stack = stack.copy();
         this.name = new UITextbox(1000, (v) ->
         {
-            this.stack.setCustomName(Text.literal(v));
+            /* Custom names are a data component now; setCustomName is gone. */
+            this.stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(v));
             this.pickItemStack(this.stack);
             this.updateNbt();
         });
@@ -71,7 +74,7 @@ public class UIItemStackOverlayPanel extends UIOverlayPanel
             try
             {
                 NbtCompound nbtCompound = new StringNbtReader(new StringReader(v)).parseCompound();
-                ItemStack itemStack = ItemStack.fromNbt(nbtCompound);
+                ItemStack itemStack = ItemStack.fromNbtOrEmpty(MinecraftClient.getInstance().world.getRegistryManager(), nbtCompound);
 
                 this.pickItemStack(itemStack);
                 this.itemList.list.setCurrentScroll(Registries.ITEM.getId(this.stack.getItem()).toString());
@@ -114,7 +117,7 @@ public class UIItemStackOverlayPanel extends UIOverlayPanel
 
     private void setItem(String s)
     {
-        this.stack = new ItemStack(Registries.ITEM.get(new Identifier(s)));
+        this.stack = new ItemStack(Registries.ITEM.get(Identifier.of(s)));
 
         this.pickItemStack(this.stack);
         this.updateNbt();

@@ -38,7 +38,7 @@ public class FluidVertexConsumer implements VertexConsumer
     }
 
     @Override
-    public VertexConsumer vertex(double x, double y, double z)
+    public VertexConsumer vertex(float x, float y, float z)
     {
         this.position.transformPosition((float) x, (float) y, (float) z, this.temporary);
         this.consumer.vertex(this.temporary.x, this.temporary.y, this.temporary.z);
@@ -86,21 +86,6 @@ public class FluidVertexConsumer implements VertexConsumer
         return this;
     }
 
-    @Override
-    public void next()
-    {
-        this.consumer.next();
-    }
 
-    @Override
-    public void fixedColor(int red, int green, int blue, int alpha)
-    {
-        this.consumer.fixedColor(red, green, blue, alpha);
-    }
 
-    @Override
-    public void unfixColor()
-    {
-        this.consumer.unfixColor();
-    }
 }

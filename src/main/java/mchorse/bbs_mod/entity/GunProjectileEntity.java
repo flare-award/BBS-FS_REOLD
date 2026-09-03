@@ -14,10 +14,12 @@ import net.minecraft.block.Blocks;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.nbt.NbtCompound;
@@ -90,7 +92,7 @@ public class GunProjectileEntity extends ProjectileEntity implements IEntityForm
     }
 
     @Override
-    protected void initDataTracker()
+    protected void initDataTracker(DataTracker.Builder builder)
     {}
 
     public GunProperties getProperties()
@@ -345,10 +347,11 @@ public class GunProjectileEntity extends ProjectileEntity implements IEntityForm
                     }
                 }
 
-                if (owner instanceof LivingEntity)
+                /* 1.21 replaced the two attacker/victim hooks with one call driven by the damage
+                 * source, so the weapon's enchantments are resolved from who actually dealt it. */
+                if (owner instanceof LivingEntity livingOwner && this.getWorld() instanceof ServerWorld serverWorld)
                 {
-                    EnchantmentHelper.onUserDamaged(livingEntity, owner);
-                    EnchantmentHelper.onTargetDamaged((LivingEntity)owner, livingEntity);
+                    EnchantmentHelper.onTargetDamaged(serverWorld, livingEntity, this.getDamageSources().mobAttack(livingOwner));
                 }
 
                 this.onHit(livingEntity);

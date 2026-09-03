@@ -547,11 +547,10 @@ public class MCEntity implements IEntity
     @Override
     public int getRoll()
     {
-        if (this.mcEntity instanceof LivingEntity living)
-        {
-            return living.getRoll();
-        }
-
+        /* 1.21 removed the roll tracked data outright (its intermediary now backs
+         * getFallFlyingTicks), so vanilla no longer reports one and nothing can be forwarded.
+         * The death roll pose in ProceduralAnimator keys off this being above 4, which now never
+         * happens - the animation it drove is gone from the game, not just from this accessor. */
         return 0;
     }
 

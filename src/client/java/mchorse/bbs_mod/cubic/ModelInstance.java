@@ -64,6 +64,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import mchorse.bbs_mod.graphics.Draw;
+
 public class ModelInstance implements IModelInstance
 {
     /** Identity NormalMat for the welded immediate draw — its normals are already CPU-transformed to world space. */
@@ -545,8 +547,7 @@ public class ModelInstance implements IModelInstance
 
         if (cpuGeometry)
         {
-            builder = Tessellator.getInstance().getBuffer();
-            builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+            builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
         }
 
         CubicRenderer.processRenderModel(renderProcessor, builder, stack, model);
@@ -582,7 +583,7 @@ public class ModelInstance implements IModelInstance
 
         if (!split && !whole)
         {
-            BufferRenderer.drawWithGlobalProgram(builder.end());
+            Draw.drawBuilt(builder);
 
             return;
         }
@@ -593,7 +594,7 @@ public class ModelInstance implements IModelInstance
         VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
 
         buffer.bind();
-        buffer.upload(builder.end());
+        Draw.uploadBuilt(buffer, builder);
 
         Matrix4f modelView = new Matrix4f(RenderSystem.getModelViewMatrix());
 
@@ -682,9 +683,8 @@ public class ModelInstance implements IModelInstance
                 renderProcessor.setColor(color.r, color.g, color.b, color.a);
                 RenderSystem.setShader(() -> shader);
 
-                BufferBuilder builder = Tessellator.getInstance().getBuffer();
+                BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
 
-                builder.begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
                 CubicRenderer.processRenderModel(renderProcessor, builder, stack, model);
                 this.drawImmediate(builder, shader, stack, null, stencilMap, BBSModClient.getTextures().getLastBound(), color.a);
             }

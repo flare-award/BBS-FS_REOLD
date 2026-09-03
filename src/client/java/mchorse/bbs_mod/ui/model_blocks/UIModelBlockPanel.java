@@ -685,14 +685,14 @@ public class UIModelBlockPanel extends UIDashboardPanel implements IFlightSuppor
         int h = texture.height;
 
         ShaderProgram previewProgram = BBSShaders.getPickerPreviewProgram();
-        GlUniform target = previewProgram.getUniform("Target");
+        GlUniform target = previewProgram != null ? previewProgram.getUniform("Target") : null;
 
         if (target != null)
         {
             target.set(this.gizmoStencil.getIndex());
         }
 
-        GlUniform highlight = previewProgram.getUniform("HighlightColor");
+        GlUniform highlight = previewProgram != null ? previewProgram.getUniform("HighlightColor") : null;
 
         if (highlight != null)
         {

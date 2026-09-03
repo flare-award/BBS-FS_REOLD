@@ -172,7 +172,7 @@ public class FilmEditorController extends BaseFilmController
                     this.renderOnion(replay, pose.getKeyframes().indexOf(segment.b), 1, pose, onionSkin.postColor.get(), onionSkin.postFrames.get(), context, isPlaying, entity);
 
                     replay.keyframes.apply(ticks, entity);
-                    float tick = ticks + this.getTransition(entity, context.tickDelta());
+                    float tick = ticks + this.getTransition(entity, context.tickCounter().getTickDelta(true));
                     Form form = entity.getForm();
                     replay.properties.applyProperties(form, tick);
 
@@ -249,7 +249,7 @@ public class FilmEditorController extends BaseFilmController
             && this.controller.isAnchorGizmo();
 
         return super.getFilmControllerContext(context, replay, entity)
-            .transition(this.getTransition(entity, context.tickDelta()))
+            .transition(this.getTransition(entity, context.tickCounter().getTickDelta(true)))
             .bone(aBone, local)
             .gizmoSpace(this.controller.getBoneSpace(), this.controller.getGizmoView())
             .bone2(aBone2, local2)

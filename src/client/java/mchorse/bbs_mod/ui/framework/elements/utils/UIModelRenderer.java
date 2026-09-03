@@ -34,6 +34,9 @@ import org.lwjgl.opengl.GL11;
  *
  * This base class can be used for full screen model viewer.
  */
+import mchorse.bbs_mod.graphics.Draw;
+import mchorse.bbs_mod.graphics.InverseView;
+
 public abstract class UIModelRenderer extends UIElement
 {
     private static Vector3d vec = new Vector3d();
@@ -254,7 +257,10 @@ public abstract class UIModelRenderer extends UIElement
         MatrixStackUtils.cacheMatrices();
 
         RenderSystem.setProjectionMatrix(this.camera.projection, VertexSorter.BY_Z);
-        RenderSystem.setInverseViewRotationMatrix(new Matrix3f(this.camera.view).invert());
+        /* 1.21 removed RenderSystem's view rotation matrix; the original 1.21.1 port keeps its
+         * inverse in InverseView and feeds it from the preview camera, so the model shader gets the
+         * right ViewRotationMat for this UI render. */
+        InverseView.set(new Matrix3f(this.camera.view).invert());
 
         /* Rendering begins... */
         stack.push();
@@ -262,10 +268,10 @@ public abstract class UIModelRenderer extends UIElement
         stack.translate(-this.camera.position.x, -this.camera.position.y, -this.camera.position.z);
         MatrixStackUtils.multiply(stack, this.transform);
 
+        /* 1.21 dropped the view matrix argument - the shader gets it from the global state. */
         RenderSystem.setupLevelDiffuseLighting(
             new Vector3f(0, 0.85F, -1).normalize(),
-            new Vector3f(0, 0.85F, 1).normalize(),
-            this.camera.view
+            new Vector3f(0, 0.85F, 1).normalize()
         );
 
         if (this.grid)
@@ -374,22 +380,21 @@ public abstract class UIModelRenderer extends UIElement
     protected void renderGrid(UIContext context)
     {
         Matrix4f matrix4f = context.batcher.getContext().getMatrices().peek().getPositionMatrix();
-        BufferBuilder builder = Tessellator.getInstance().getBuffer();
+        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
 
         RenderSystem.setShader(GameRenderer::getPositionColorProgram);
-        builder.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION_COLOR);
 
         for (int x = 0; x <= 10; x ++)
         {
             if (x == 0)
             {
-                builder.vertex(matrix4f, x - 5, 0, -5).color(0F, 0F, 1F, 1F).next();
-                builder.vertex(matrix4f, x - 5, 0, 5).color(0F, 0F, 1F, 1F).next();
+                builder.vertex(matrix4f, x - 5, 0, -5).color(0F, 0F, 1F, 1F);
+                builder.vertex(matrix4f, x - 5, 0, 5).color(0F, 0F, 1F, 1F);
             }
             else
             {
-                builder.vertex(matrix4f, x - 5, 0, -5).color(0.25F, 0.25F, 0.25F, 1F).next();
-                builder.vertex(matrix4f, x - 5, 0, 5).color(0.25F, 0.25F, 0.25F, 1F).next();
+                builder.vertex(matrix4f, x - 5, 0, -5).color(0.25F, 0.25F, 0.25F, 1F);
+                builder.vertex(matrix4f, x - 5, 0, 5).color(0.25F, 0.25F, 0.25F, 1F);
             }
         }
 
@@ -397,16 +402,16 @@ public abstract class UIModelRenderer extends UIElement
         {
             if (x == 0)
             {
-                builder.vertex(matrix4f, -5, 0, x - 5).color(1F, 0F, 0F, 1F).next();
-                builder.vertex(matrix4f, 5, 0, x - 5).color(1F, 0F, 0F, 1F).next();
+                builder.vertex(matrix4f, -5, 0, x - 5).color(1F, 0F, 0F, 1F);
+                builder.vertex(matrix4f, 5, 0, x - 5).color(1F, 0F, 0F, 1F);
             }
             else
             {
-                builder.vertex(matrix4f, -5, 0, x - 5).color(0.25F, 0.25F, 0.25F, 1F).next();
-                builder.vertex(matrix4f, 5, 0, x - 5).color(0.25F, 0.25F, 0.25F, 1F).next();
+                builder.vertex(matrix4f, -5, 0, x - 5).color(0.25F, 0.25F, 0.25F, 1F);
+                builder.vertex(matrix4f, 5, 0, x - 5).color(0.25F, 0.25F, 0.25F, 1F);
             }
         }
 
-        BufferRenderer.drawWithGlobalProgram(builder.end());
+        Draw.drawBuilt(builder);
     }
 }

@@ -1,5 +1,7 @@
 package mchorse.bbs_mod.forms.renderers;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import org.lwjgl.opengl.GL11;
 import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.forms.FormUtils;
 import mchorse.bbs_mod.forms.FormUtilsClient;
@@ -51,7 +53,26 @@ public abstract class FormRenderer <T extends Form>
 
     public final void renderUI(UIContext context, int x1, int y1, int x2, int y2)
     {
-        this.renderInUI(context, x1, y1, x2, y2);
+        /* The UI matrix mirrors the model on Y (getUIMatrix scales it by -1), which reverses the
+         * triangle winding. With face culling left on the GPU then discards exactly the faces the
+         * viewer is looking at and keeps the ones behind them: bobj models read as torn apart and
+         * the vanilla player model loses its whole front. Culling is off for the form pass only,
+         * and the previous state is put back so the rest of the screen is untouched. */
+        boolean wasCulling = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+
+        RenderSystem.disableCull();
+
+        try
+        {
+            this.renderInUI(context, x1, y1, x2, y2);
+        }
+        finally
+        {
+            if (wasCulling)
+            {
+                RenderSystem.enableCull();
+            }
+        }
 
         FontRenderer font = context.batcher.getFont();
         String name = this.form.name.get();
