@@ -1081,7 +1081,12 @@ public class FilmEffects
         if (draws)
         {
             drawWorldPhotos(afterForms);
-            stampPending = true;
+
+            /* The fence hides water outright rather than letting the photo cover it, which is
+             * invisible while the photo is opaque but tears a hole in the world as soon as the
+             * opacity is dialled down. A translucent photo therefore skips the fence and the
+             * world - water included - stays where it is. */
+            stampPending = worldPhotosOpaque(afterForms);
         }
 
         if (afterForms)
@@ -1179,6 +1184,32 @@ public class FilmEffects
             RenderSystem.applyModelViewMatrix();
             RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
         }
+    }
+
+    /**
+     * Whether every in-world photo drawn at this stage is effectively opaque. See the call site:
+     * the near-plane depth fence is only worth its side effects while the photo hides everything
+     * behind it anyway.
+     */
+    private static boolean worldPhotosOpaque(boolean afterForms)
+    {
+        for (PhotoLayer layer : getPhotoLayers())
+        {
+            if (!layer.texture.isEmpty() && drawsInStage(layerMode(layer), afterForms) && layer.opacity < 0.999F)
+            {
+                return false;
+            }
+        }
+
+        for (PhotoClip.State state : getClipPhotoStates())
+        {
+            if (!state.texture.isEmpty() && drawsInStage(clampLayerMode(state.layerMode), afterForms) && state.opacity < 0.999F)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static boolean drawsInStage(int mode, boolean afterForms)
