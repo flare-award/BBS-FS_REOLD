@@ -500,14 +500,6 @@ public class FilmEffects
      * grading pass, which is what keeps the filters off them and lets the water stay in frame. */
     private static boolean photoMarkPass;
 
-    /* The mask is copied out at the freeze point instead of being read back from the frame later:
-     * by the time the post pass runs, a shader pack's composite has already written over the whole
-     * screen (alpha included) and the mark is gone. */
-    private static Texture photoMaskTexture;
-    private static int photoMaskWidth;
-    private static int photoMaskHeight;
-    private static boolean photoMaskValid;
-
     /* The photo layer list is reparsed only when the serialized setting changes */
     private static String cachedLayersString;
     private static List<PhotoLayer> cachedLayers = new ArrayList<>();
@@ -849,7 +841,16 @@ public class FilmEffects
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer.id);
             GL11.glViewport(0, 0, width, height);
 
-            worldPhotos = worldPhotos && photoMaskValid && photoMaskTexture != null;
+            if (worldPhotos)
+            {
+                /* The filter shader reads the marks out of this very snapshot and gets them right,
+                 * so the photo composite takes its mask from the same place. */
+                ensurePingTexture(width, height);
+
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, framebuffer.id);
+                pingTexture.bind();
+                GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+            }
 
             if (filters)
             {
@@ -1112,7 +1113,6 @@ public class FilmEffects
         {
             modelBlocksReplayed = false;
             stampPending = false;
-            photoMaskValid = false;
 
             /* Behind-the-actors photos want the blocks under themselves */
             if (hasWorldPhoto(LAYER_BEHIND_ACTORS))
@@ -1272,61 +1272,7 @@ public class FilmEffects
     {
         stampPending = false;
 
-        copyPhotoMask();
-
         RenderSystem.colorMask(true, true, true, false);
-    }
-
-    /** Snapshot the frame's alpha - the photo mask - while it is still intact. */
-    private static void copyPhotoMask()
-    {
-        try
-        {
-            int[] viewport = new int[4];
-
-            GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
-
-            int w = viewport[2];
-            int h = viewport[3];
-
-            if (w <= 0 || h <= 0)
-            {
-                return;
-            }
-
-            if (photoMaskTexture == null)
-            {
-                photoMaskTexture = new Texture();
-                photoMaskTexture.setFormat(TextureFormat.RGBA_U8);
-                photoMaskTexture.setFilter(GL11.GL_LINEAR);
-            }
-
-            if (photoMaskWidth != w || photoMaskHeight != h)
-            {
-                photoMaskTexture.bind();
-                photoMaskTexture.setSize(w, h);
-                photoMaskTexture.unbind();
-
-                photoMaskWidth = w;
-                photoMaskHeight = h;
-            }
-
-            int prevRead = GL30.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-            int draw = GL30.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, draw);
-            photoMaskTexture.bind();
-            GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, prevRead);
-
-            photoMaskValid = true;
-        }
-        catch (Exception e)
-        {
-            broken = true;
-
-            e.printStackTrace();
-        }
     }
 
     /** Put the alpha writes back once the world pass is over. */
@@ -1460,7 +1406,7 @@ public class FilmEffects
         GL20.glUniform1i(uniformMask, 1);
 
         GL13.glActiveTexture(GL13.GL_TEXTURE1);
-        photoMaskTexture.bind();
+        pingTexture.bind();
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
         GL20.glUniform2f(uniformPhotoTexel, 1F / width, 1F / height);
