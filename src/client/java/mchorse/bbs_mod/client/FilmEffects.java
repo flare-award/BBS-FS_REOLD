@@ -1267,11 +1267,17 @@ public class FilmEffects
         {
             try
             {
-                stencilUsable = GL30.glGetFramebufferAttachmentParameteriv(
+                /* LWJGL only exposes the buffer/array forms of this getter */
+                int[] bits = new int[1];
+
+                GL30.glGetFramebufferAttachmentParameteriv(
                     GL30.GL_FRAMEBUFFER,
                     GL30.GL_STENCIL_ATTACHMENT,
-                    GL30.GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE
-                ) > 0;
+                    GL30.GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE,
+                    bits
+                );
+
+                stencilUsable = bits[0] > 0;
             }
             catch (Exception e)
             {
