@@ -165,6 +165,17 @@ public class FilmEffects
                 uv.x = 1.0 - uv.x;
             }
 
+            /* A pixel an in-world photo claimed is not graded at all: the photo is composited
+             * over the graded frame afterwards, so grading here would show through it. */
+            vec4 marked = texture(u_texture, uv);
+
+            if (marked.a < 0.002)
+            {
+                fragColor = vec4(marked.rgb, 1.0);
+
+                return;
+            }
+
             if (u_distortion != 0.0)
             {
                 /* Barrel (positive) or pincushion (negative) lens warp,
@@ -392,7 +403,10 @@ public class FilmEffects
         #version 150
 
         uniform sampler2D u_texture;
+        uniform sampler2D u_mask;
+        uniform vec2 u_texel;
         uniform float u_opacity;
+        uniform float u_use_mask;
 
         in vec2 v_uv;
 
@@ -400,6 +414,14 @@ public class FilmEffects
 
         void main()
         {
+            /* In-world photos are composited over the graded frame, and only where nothing the
+             * world drew later covered them: the mark pass wrote alpha 0 there, and every later
+             * fragment wrote its own alpha back over the mark. */
+            if (u_use_mask > 0.5 && texture(u_mask, gl_FragCoord.xy * u_texel).a > 0.5)
+            {
+                discard;
+            }
+
             vec4 color = texture(u_texture, v_uv);
 
             fragColor = vec4(color.rgb, color.a * u_opacity);
@@ -468,6 +490,15 @@ public class FilmEffects
     private static int uniformAspect;
     private static int uniformOpacity;
     private static int uniformPhotoFlip;
+    private static int uniformMask;
+    private static int uniformPhotoTexel;
+    private static int uniformUseMask;
+
+    /* In-world photos are marked, not painted: the quad writes alpha 0 where it lies, everything
+     * the world draws over it writes its own alpha back, and the mark is frozen at the point the
+     * depth fence used to go down. The photos are composited from the surviving marks after the
+     * grading pass, which is what keeps the filters off them and lets the water stay in frame. */
+    private static boolean photoMarkPass;
 
     /* The photo layer list is reparsed only when the serialized setting changes */
     private static String cachedLayersString;
@@ -777,8 +808,9 @@ public class FilmEffects
         FilterState state = getFilterState();
         boolean filters = hasFilters(state) && !showOriginal;
         boolean photo = hasPostPhoto() && !showNoPhoto;
+        boolean worldPhotos = hasAnyWorldPhoto() && !showNoPhoto;
 
-        if (!filters && !photo)
+        if (!filters && !photo && !worldPhotos)
         {
             return;
         }
@@ -809,9 +841,21 @@ public class FilmEffects
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, framebuffer.id);
             GL11.glViewport(0, 0, width, height);
 
+            if (worldPhotos)
+            {
+                /* Snapshot before anything is graded: the copy carries the alpha marks the
+                 * in-world photos are composited from. */
+                snapshotFrame(framebuffer, width, height);
+            }
+
             if (filters)
             {
                 applyFilters(framebuffer, width, height, state);
+            }
+
+            if (worldPhotos)
+            {
+                drawWorldPhotosMasked(width, height);
             }
 
             if (photo)
@@ -1080,7 +1124,17 @@ public class FilmEffects
 
         if (draws)
         {
-            drawWorldPhotos(afterForms);
+            photoMarkPass = true;
+
+            try
+            {
+                drawWorldPhotos(afterForms);
+            }
+            finally
+            {
+                photoMarkPass = false;
+            }
+
             stampPending = true;
         }
 
@@ -1105,12 +1159,12 @@ public class FilmEffects
         }
     }
 
-    /** Stamp the near-plane depth fence if an in-world photo went down this frame. */
+    /** Freeze the photo mask if an in-world photo went down this frame. */
     public static void stampPhotoDepthIfPending()
     {
         if (stampPending)
         {
-            stampPhotoDepth();
+            freezePhotoMask();
         }
     }
 
@@ -1137,13 +1191,23 @@ public class FilmEffects
         modelViewStack.pushMatrix();
         modelViewStack.identity();
         RenderSystem.applyModelViewMatrix();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
+
+        if (photoMarkPass)
+        {
+            /* No color: the quad only writes alpha 0 into the pixels the photo covers */
+            RenderSystem.disableBlend();
+            RenderSystem.colorMask(false, false, false, true);
+        }
+        else
+        {
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+        }
 
         try
         {
@@ -1171,6 +1235,11 @@ public class FilmEffects
         }
         finally
         {
+            if (photoMarkPass)
+            {
+                RenderSystem.colorMask(true, true, true, true);
+            }
+
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
             RenderSystem.enableCull();
@@ -1189,55 +1258,22 @@ public class FilmEffects
     }
 
     /**
-     * A depth-only fullscreen quad at the near plane. Everything the world pass
-     * draws after it fails the depth test where the photo is - water, mobs,
-     * vanilla block entities and particles stay behind the photo, exactly like
-     * the sky and the terrain that were drawn before it.
+     * Freeze the photo mask. From here on the world keeps drawing normally - water included - but
+     * it no longer writes alpha, so it cannot erase the mark the photos left. Everything drawn
+     * before this point did overwrite the mark with its own alpha, which is exactly the ordering
+     * the old near-plane depth fence enforced, only per pixel instead of for the whole frame.
      */
-    private static void stampPhotoDepth()
+    private static void freezePhotoMask()
     {
         stampPending = false;
 
-        Matrix4f previousProjection = new Matrix4f(RenderSystem.getProjectionMatrix());
-        VertexSorter previousSorter = RenderSystem.getVertexSorting();
-        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
-        Matrix4f identity = new Matrix4f();
-        BufferBuilder builder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        RenderSystem.colorMask(true, true, true, false);
+    }
 
-        RenderSystem.setProjectionMatrix(identity, VertexSorter.BY_Z);
-        modelViewStack.pushMatrix();
-        modelViewStack.identity();
-        RenderSystem.applyModelViewMatrix();
-        RenderSystem.colorMask(false, false, false, false);
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthFunc(GL11.GL_ALWAYS);
-        RenderSystem.depthMask(true);
-        RenderSystem.disableCull();
-        RenderSystem.setShader(GameRenderer::getPositionProgram);
-
-        try
-        {
-            builder.vertex(identity, -1F, 1F, -1F);
-            builder.vertex(identity, -1F, -1F, -1F);
-            builder.vertex(identity, 1F, -1F, -1F);
-            builder.vertex(identity, 1F, 1F, -1F);
-            Draw.drawBuilt(builder);
-        }
-        catch (Exception e)
-        {
-            broken = true;
-
-            e.printStackTrace();
-        }
-        finally
-        {
-            RenderSystem.colorMask(true, true, true, true);
-            RenderSystem.depthFunc(GL11.GL_LEQUAL);
-            RenderSystem.enableCull();
-            modelViewStack.popMatrix();
-            RenderSystem.applyModelViewMatrix();
-            RenderSystem.setProjectionMatrix(previousProjection, previousSorter);
-        }
+    /** Put the alpha writes back once the world pass is over. */
+    public static void restoreColorMask()
+    {
+        RenderSystem.colorMask(true, true, true, true);
     }
 
     /**
@@ -1331,7 +1367,7 @@ public class FilmEffects
                 u = 1F - u;
             }
 
-            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, opacity);
+            builder.vertex(identity, x + rx, -y + ry, 0F).texture(u, v).color(1F, 1F, 1F, photoMarkPass ? 0F : opacity);
         }
 
         Draw.drawBuilt(builder);
@@ -1342,6 +1378,68 @@ public class FilmEffects
      * placed in NDC: scale 1 spans the frame's full height, the width keeps the
      * photo's aspect ratio, and the stretches multiply each axis on top of that.
      */
+    /** Whether any photo layer sits in one of the in-world modes. */
+    private static boolean hasAnyWorldPhoto()
+    {
+        return hasWorldPhoto(LAYER_BEHIND_ACTORS) || hasWorldPhoto(LAYER_BEHIND_BLOCKS) || hasWorldPhoto(LAYER_BEHIND_MODELS);
+    }
+
+    /** Copy the frame into the ping texture, which doubles as the photo mask source. */
+    private static void snapshotFrame(Framebuffer framebuffer, int width, int height)
+    {
+        ensurePingTexture(width, height);
+
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, framebuffer.id);
+        pingTexture.bind();
+        GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+    }
+
+    /**
+     * Composite the in-world photos over the graded frame. A photo pixel is dropped wherever the
+     * mask says the world drew over it, which is what keeps the film's forms in front of the photo
+     * while the water - frozen out of the mask - stays behind it.
+     */
+    private static void drawWorldPhotosMasked(int width, int height)
+    {
+        ensurePhotoProgram();
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        GL20.glUseProgram(photoProgram);
+
+        /* Sampler uniforms only stick while the program is the current one */
+        GL20.glUniform1i(uniformMask, 1);
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        pingTexture.bind();
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+
+        GL20.glUniform2f(uniformPhotoTexel, 1F / width, 1F / height);
+        GL20.glUniform1f(uniformUseMask, 1F);
+
+        for (PhotoLayer layer : getPhotoLayers())
+        {
+            if (layerMode(layer) != LAYER_OVER)
+            {
+                drawPhoto(getPhotoTexture(layer.texture), layer.opacity, layer.x, layer.y, layer.scale, layer.stretchX, layer.stretchY, layer.rotate, layer.flip, width, height);
+            }
+        }
+
+        for (PhotoClip.State state : getClipPhotoStates())
+        {
+            if (clampLayerMode(state.layerMode) != LAYER_OVER)
+            {
+                drawPhoto(getPhotoTexture(state.texture), state.opacity, state.x, state.y, state.scale, state.stretchX, state.stretchY, state.rotate, state.flip, width, height);
+            }
+        }
+
+        GL20.glUniform1f(uniformUseMask, 0F);
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE1);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
+        GL13.glActiveTexture(GL13.GL_TEXTURE0);
+    }
+
     private static void applyPhotos(int width, int height)
     {
         ensurePhotoProgram();
@@ -1538,6 +1636,9 @@ public class FilmEffects
         uniformAspect = GL20.glGetUniformLocation(photoProgram, "u_aspect");
         uniformOpacity = GL20.glGetUniformLocation(photoProgram, "u_opacity");
         uniformPhotoFlip = GL20.glGetUniformLocation(photoProgram, "u_flip");
+        uniformMask = GL20.glGetUniformLocation(photoProgram, "u_mask");
+        uniformPhotoTexel = GL20.glGetUniformLocation(photoProgram, "u_texel");
+        uniformUseMask = GL20.glGetUniformLocation(photoProgram, "u_use_mask");
     }
 
     private static void ensurePingTexture(int width, int height)
@@ -1545,7 +1646,7 @@ public class FilmEffects
         if (pingTexture == null)
         {
             pingTexture = new Texture();
-            pingTexture.setFormat(TextureFormat.RGB_U8);
+            pingTexture.setFormat(TextureFormat.RGBA_U8);
             pingTexture.setFilter(GL11.GL_NEAREST);
         }
 

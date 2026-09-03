@@ -41,6 +41,10 @@ public class WorldRendererMixin
     {
         FormTranslucentQueue.flush();
         FilmEffects.stampPhotoDepthIfPending();
+
+        /* The mask freeze turned alpha writes off for the tail of the world pass; everything
+         * after this point (the GUI above all) needs them back. */
+        FilmEffects.restoreColorMask();
     }
 
     @Inject(method = "renderSky(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
