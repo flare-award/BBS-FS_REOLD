@@ -425,6 +425,14 @@ public class FilmEffects
      * can't land on top of the photo. */
     private static boolean stampPending;
 
+    /* In-world photo mask. The photo quad writes 1 into the stencil buffer, everything the world
+     * draws over it (the film's forms, model blocks) writes 0 back, and the translucent layer is
+     * told to leave the mark alone. The photos are then composited where the mark survived, which
+     * is what lets a photo sit on top of the water instead of deleting the water to stay visible. */
+    private static boolean photoMaskPass;
+    private static boolean photoMaskPending;
+    private static Boolean stencilUsable;
+
     /* The film whose effects are currently loaded into the working sliders */
     private static Film currentFilm;
 
@@ -1080,13 +1088,36 @@ public class FilmEffects
 
         if (draws)
         {
-            drawWorldPhotos(afterForms);
+            if (hasStencil())
+            {
+                /* Mark where the photo is instead of painting it: the color goes down at the end
+                 * of the world pass, over whatever the translucent layer put there, so the photo
+                 * covers the water rather than the water being deleted to keep the photo clean. */
+                photoMaskPass = true;
 
-            /* The fence hides water outright rather than letting the photo cover it, which is
-             * invisible while the photo is opaque but tears a hole in the world as soon as the
-             * opacity is dialled down. A translucent photo therefore skips the fence and the
-             * world - water included - stays where it is. */
-            stampPending = worldPhotosOpaque(afterForms);
+                try
+                {
+                    drawWorldPhotos(afterForms);
+                }
+                finally
+                {
+                    photoMaskPass = false;
+                }
+
+                photoMaskPending = true;
+
+                clearPhotoMaskWhereDrawn();
+            }
+            else
+            {
+                drawWorldPhotos(afterForms);
+
+                /* No stencil to mask with, so fall back to the near-plane fence. It hides water
+                 * outright rather than letting the photo cover it, which is invisible while the
+                 * photo is opaque but tears a hole in the world as soon as the opacity is dialled
+                 * down - so a translucent photo skips the fence and the world stays where it is. */
+                stampPending = worldPhotosOpaque(afterForms);
+            }
         }
 
         if (afterForms)
@@ -1150,6 +1181,16 @@ public class FilmEffects
         RenderSystem.setShader(GameRenderer::getPositionTexColorProgram);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
 
+        /* Mask pass: no color, just the stencil mark the photos are composited from later */
+        if (photoMaskPass)
+        {
+            RenderSystem.colorMask(false, false, false, false);
+            GL11.glEnable(GL11.GL_STENCIL_TEST);
+            GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
+            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
+            GL11.glStencilMask(0xFF);
+        }
+
         try
         {
             for (PhotoLayer layer : getPhotoLayers())
@@ -1176,6 +1217,13 @@ public class FilmEffects
         }
         finally
         {
+            if (photoMaskPass)
+            {
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
+                GL11.glStencilMask(0);
+                RenderSystem.colorMask(true, true, true, true);
+            }
+
             RenderSystem.depthMask(true);
             RenderSystem.enableDepthTest();
             RenderSystem.enableCull();
@@ -1210,6 +1258,95 @@ public class FilmEffects
         }
 
         return true;
+    }
+
+    /** Whether the bound framebuffer has a stencil attachment to build the photo mask in. */
+    public static boolean hasStencil()
+    {
+        if (stencilUsable == null)
+        {
+            try
+            {
+                stencilUsable = GL30.glGetFramebufferAttachmentParameteriv(
+                    GL30.GL_FRAMEBUFFER,
+                    GL30.GL_STENCIL_ATTACHMENT,
+                    GL30.GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE
+                ) > 0;
+            }
+            catch (Exception e)
+            {
+                stencilUsable = false;
+            }
+        }
+
+        return stencilUsable;
+    }
+
+    /** Drop last frame's photo mask. Called at the start of the world pass. */
+    public static void clearPhotoMask()
+    {
+        if (!hasStencil())
+        {
+            return;
+        }
+
+        GL11.glStencilMask(0xFF);
+        GL11.glClearStencil(0);
+        GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
+        GL11.glStencilMask(0);
+    }
+
+    /**
+     * Let everything the world draws from now on clear the photo mask, so only the pixels no
+     * geometry covered keep it. The translucent layer opts out again (see
+     * {@link #keepPhotoMask()}) - water must not punch the photo away.
+     */
+    public static void clearPhotoMaskWhereDrawn()
+    {
+        if (!hasStencil())
+        {
+            return;
+        }
+
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+        GL11.glStencilFunc(GL11.GL_ALWAYS, 0, 0xFF);
+        GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
+        GL11.glStencilMask(0xFF);
+    }
+
+    /** Stop the translucent layer (and everything after it) from clearing the photo mask. */
+    public static void keepPhotoMask()
+    {
+        if (hasStencil())
+        {
+            GL11.glStencilMask(0);
+        }
+    }
+
+    /** Composite the in-world photos over the frame, restricted to the surviving mask. */
+    public static void drawWorldPhotosMaskedIfPending()
+    {
+        if (!photoMaskPending)
+        {
+            return;
+        }
+
+        photoMaskPending = false;
+
+        if (broken || showNoPhoto || !isEffectsActive())
+        {
+            return;
+        }
+
+        GL11.glStencilMask(0);
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+        GL11.glStencilFunc(GL11.GL_EQUAL, 1, 0xFF);
+        GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+
+        drawWorldPhotos(false);
+        drawWorldPhotos(true);
+
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
     }
 
     private static boolean drawsInStage(int mode, boolean afterForms)

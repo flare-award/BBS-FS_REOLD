@@ -34,6 +34,7 @@ public class WorldRendererMixin
     public void onRenderWorldStart(CallbackInfo info)
     {
         FormTranslucentQueue.begin();
+        FilmEffects.clearPhotoMask();
     }
 
     @Inject(method = "render", at = @At("RETURN"))
@@ -41,6 +42,7 @@ public class WorldRendererMixin
     {
         FormTranslucentQueue.flush();
         FilmEffects.stampPhotoDepthIfPending();
+        FilmEffects.drawWorldPhotosMaskedIfPending();
     }
 
     @Inject(method = "renderSky(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V", at = @At("HEAD"), cancellable = true)
@@ -87,6 +89,10 @@ public class WorldRendererMixin
              * land, and before the translucent terrain - water can't cover the
              * in-world photos, while the forms' translucent parts still can. */
             FilmEffects.stampPhotoDepthIfPending();
+
+            /* Water must not punch a hole in the photo mask: from the translucent layer on the
+             * mask is frozen, and the photos are composited over it at the end of the pass. */
+            FilmEffects.keepPhotoMask();
         }
 
         if (BBSSettings.chromaSkyEnabled.get() && !BBSSettings.chromaSkyTerrain.get())
