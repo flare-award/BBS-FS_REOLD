@@ -5,7 +5,6 @@ import mchorse.bbs_mod.client.BBSRendering;
 import mchorse.bbs_mod.forms.renderers.utils.RecolorVertexConsumer;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BufferRenderer;
 import net.minecraft.client.render.BuiltBuffer;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -16,32 +15,13 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.opengl.GL11;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.SequencedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * A vertex consumer provider that keeps one long-lived {@link BufferBuilder} per render layer and
- * never lets the layers trip over each other.
- *
- * <p>Since 1.21 the vanilla immediate provider hands out a brand new builder per {@code getBuffer}
- * call and refuses to switch layers before the previous one was drawn ("mismatched begin/end").
- * Forms deliberately keep several layers alive at once — the structure form fills the terrain
- * layers, the item and model forms fill entity layers, and the deferred translucent pass draws them
- * in its own order later — so this provider owns the builders itself and draws them in the order
- * the layer map was built, which is what keeps opaque geometry in front of translucent geometry.</p>
- */
-import mchorse.bbs_mod.graphics.Draw;
-
 public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immediate
 {
     private static Consumer<RenderLayer> runnables;
-
-    private final BufferAllocator fallbackAllocator;
-    private final Map<RenderLayer, BufferAllocator> layerAllocators;
-    private final Map<RenderLayer, BufferBuilder> builders = new LinkedHashMap<>();
 
     private Function<VertexConsumer, VertexConsumer> substitute;
     private boolean ui;
@@ -64,12 +44,9 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
         runnables = null;
     }
 
-    public CustomVertexConsumerProvider(BufferAllocator fallbackAllocator, SequencedMap<RenderLayer, BufferAllocator> layerAllocators)
+    public CustomVertexConsumerProvider(BufferAllocator allocator, SequencedMap<RenderLayer, BufferAllocator> layers)
     {
-        super(fallbackAllocator, layerAllocators);
-
-        this.fallbackAllocator = fallbackAllocator;
-        this.layerAllocators = layerAllocators;
+        super(allocator, layers);
     }
 
     public void setSubstitute(Function<VertexConsumer, VertexConsumer> substitute)
@@ -90,23 +67,7 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
     @Override
     public VertexConsumer getBuffer(RenderLayer renderLayer)
     {
-        /* A 1.21.1 BufferBuilder has no begin()/reset() - only its constructor puts it into the
-         * building state, and end()/endNullable() close it for good. This provider keeps one
-         * builder per layer across draws, so a builder that a previous pass already ended must be
-         * replaced here; handing the dead one out is what threw "Not building!" from
-         * VertexConsumer.vertex() as soon as the morphing list reached a projectile model. */
-        BufferBuilder buffer = this.builders.get(renderLayer);
-
-        if (buffer == null || !buffer.building)
-        {
-            buffer = new BufferBuilder(
-                this.layerAllocators.getOrDefault(renderLayer, this.fallbackAllocator),
-                renderLayer.getDrawMode(),
-                renderLayer.getVertexFormat()
-            );
-
-            this.builders.put(renderLayer, buffer);
-        }
+        VertexConsumer buffer = super.getBuffer(renderLayer);
 
         if (this.substitute != null)
         {
@@ -138,43 +99,17 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
 
         if (origin == null || !FormTranslucentQueue.isActive() || !(textLayer || isDeferrableTranslucent(layer)))
         {
-            drawNow(layer, this.builders.get(layer));
+            super.draw(layer);
 
             return;
         }
 
-        BufferBuilder builder = this.builders.get(layer);
+        /* Same bookkeeping as the vanilla draw (claim the layer's pending builder, sort a
+         * translucent layer's quads, clear the current layer), except the built geometry is
+         * retained in our own vertex buffer and replayed by the queue instead of drawn now. */
+        BufferBuilder builder = this.pending.remove(layer);
 
-        if (builder == null || builder.vertexCount == 0)
-        {
-            return;
-        }
-
-        /* Ending and uploading the layer's buffer here is what the immediate provider's own
-         * draw would have done — including the vertex layout Iris pins around it. */
-        boolean extended = BBSRendering.beginIrisBufferUpload(builder);
-        VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-
-        try
-        {
-            buffer.bind();
-            Draw.uploadBuilt(buffer, builder);
-            VertexBuffer.unbind();
-        }
-        finally
-        {
-            BBSRendering.endIrisBufferUpload(extended);
-        }
-
-        FormTranslucentQueue.add(new FormTranslucentQueue.RenderLayerCommand(layer, buffer, new Matrix4f(RenderSystem.getModelViewMatrix()), new Vector3f(origin)));
-    }
-
-    private static void drawNow(RenderLayer layer, BufferBuilder builder)
-    {
-        /* endNullable() calls ensureBuilding() since 1.21, so on a builder that has already
-         * been ended it throws "Not building!" instead of returning null. The builders map
-         * outlives a draw, so a second pass over it used to take the whole screen down. */
-        if (builder == null || !builder.building)
+        if (builder == null)
         {
             return;
         }
@@ -183,7 +118,33 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
 
         if (built != null)
         {
-            BufferRenderer.drawWithGlobalProgram(built);
+            if (layer.isTranslucent())
+            {
+                built.sortQuads(this.layerBuffers.getOrDefault(layer, this.allocator), RenderSystem.getVertexSorting());
+            }
+
+            /* Uploading the layer's buffer here is what the immediate provider's own draw would
+             * have done — including the vertex layout Iris pins around it. */
+            boolean extended = BBSRendering.beginIrisBufferUpload(builder);
+            VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+
+            try
+            {
+                buffer.bind();
+                buffer.upload(built);
+                VertexBuffer.unbind();
+            }
+            finally
+            {
+                BBSRendering.endIrisBufferUpload(extended);
+            }
+
+            FormTranslucentQueue.add(new FormTranslucentQueue.RenderLayerCommand(layer, buffer, new Matrix4f(RenderSystem.getModelViewMatrix()), new Vector3f(origin)));
+        }
+
+        if (layer.equals(this.currentLayer))
+        {
+            this.currentLayer = null;
         }
     }
 
@@ -194,11 +155,10 @@ public class CustomVertexConsumerProvider extends VertexConsumerProvider.Immedia
         return name.contains("translucent") && !name.contains("glint");
     }
 
+    @Override
     public void draw()
     {
-        /* Insertion order: the layer map is built opaque-first, so opaque writes depth before the
-         * translucent layers are drawn over it. */
-        this.builders.forEach(CustomVertexConsumerProvider::drawNow);
+        super.draw();
 
         if (this.ui)
         {
